@@ -1,0 +1,81 @@
+;;; emajutsu-core.el -- make calls to jujutsu -*- lexical-binding: t -*-
+
+;; Copyright (C) 2025-2025 Andrew Parisi
+
+;; Author: Andrew Parisi <andrew.p.parisi@gmail.com>
+;; Created 15 May 2025
+;; Keywords: vcs, jujutsu
+;; Package-Requires: ((emacs 30))
+;; SPDX-License-Identifier: GPL-3.0
+;; Version: 0.0.1
+
+;;; Commentary:
+
+;; Execute jj commands from within Emacs
+
+;;; Code:
+(require 'emajutsu-template)
+
+(defconst emajutsu/jj
+  (string-trim (shell-command-to-string "which jj")))
+
+(defun emajutsu-core--execute-internal (command subcommand &rest args)
+  "Execute COMMAND with SUBCOMMAND and ARGS."
+  (when subcommand (push subcommand args))
+  (push command args)
+  (push emajutsu/jj args)
+  (let ((response (shell-command-to-string (string-join args " "))))
+    (if (string-prefix-p "Error:" response)
+	(error response)
+      response)))
+
+(defun emajutsu-core--parse-file-line (line)
+  "Structured output of LINE representing a file."
+  (let ((mod-status (cond
+		      ((string-prefix-p "A" line) :added)
+		      ((string-prefix-p "M" line) :modified)
+		      ((string-prefix-p "D" line) :deleted)
+		      ((string-prefix-p "R" line) :renamed)
+		      (t nil))))
+    (list :status mod-status
+	  :file (string-trim (substring line 1)))))
+
+(defun emajutsu-core/change-status (commit-or-change)
+  "Get information for COMMIT-OR-CHANGE.
+
+This includes: change and commit ids and description"
+  (json-parse-string
+   (string-replace
+    "\n" "\\n"
+    (emajutsu-core--execute-internal
+     "log" nil "--no-graph" "-r" commit-or-change "-T"
+     (emajutsu-template/build
+      (list
+       :change-id "change_id.short()"
+       :commit-id "commit_id.short()"
+       :short-change "change_id.shortest()"
+       :short-commit "commit_id.shortest()"
+       :current "current_working_copy"
+       :conflict "conflict"
+       :empty "empty"
+       :immutable "immutable"
+       :parents (list :map "x" "x.commit_id().shortest()" "parents")
+       :description "if(description, description, \" \")"))))
+   :object-type 'plist
+   :array-type 'list))
+
+(defun emajutsu-core/change-files (commit-or-change)
+  "Get details about the commit with COMMIT-OR-CHANGE id or unique prefix."
+  (mapcar
+   #'emajutsu-core--parse-file-line
+   (split-string
+    (emajutsu-core--execute-internal
+     "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
+    "\n" t " ")))
+
+(defun emajutsu-core/edit (commit-or-change)
+  "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
+  (emajutsu-core--execute-internal "edit" "-r" commit-or-change))
+
+(provide 'emajutsu-core)
+;;; emajutsu-core.el ends here
