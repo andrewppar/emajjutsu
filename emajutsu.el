@@ -16,12 +16,12 @@
 ;;; Code:
 (require 'emajutsu-status)
 
-
+;;;###autoload
 (defun emajutsu/status (&optional change-id)
   "View the status of CHANGE-ID."
   (interactive
    (list
-    (read-string "change: ")))
+    (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
     (emajutsu-status/status id)))
 

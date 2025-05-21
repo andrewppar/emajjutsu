@@ -16,6 +16,7 @@
 ;;; Code:
 (require 'subr-x)
 (require 'emajutsu-core)
+(require 'cl-lib)
 
 (defconst emajutsu-face/modified-file (list :foreground "#94e2d5"))
 (defconst emajutsu-face/added-file (list :foreground "#a6e3a1"))
@@ -171,6 +172,8 @@ Bold when PARENT?."
      (insert
       (string-join
        (list
+	(format "Directory: %s" default-directory)
+	""
 	(emajutsu-status--files files)
 	(emajutsu-status--change change nil)
 	(emajutsu-status--parents (mapcar #'emajutsu-core/change-status parents)))
@@ -189,15 +192,19 @@ Bold when PARENT?."
 		    car))))
 
 (defun emajutsu-status/refresh-buffer ()
-  (let ((change-id (emajutsu-status--buffer->data--change-id (current-buffer))))
-    (kill-buffer )))
+  "Refresh the status on the current buffer."
+  (interactive)
+  (thread-last
+    (current-buffer)
+    emajutsu-status--buffer->data--change-id
+    emajutsu-status/status))
 
-(defun emajutsu-status/change-at-point ()
+(defun emajutsu-status/follow-at-point ()
   "Call `emajutsu-status/status` on the change-id for the line at point."
   (interactive)
   (emajutsu-status/status (emajutsu-status--change-at-point)))
 
-(defun emajutsu-status/focus-at-point ()
+(defun emajutsu-status/edit-at-point ()
   "Call jujutsu edit on the change under point.
 If one cannot be found the change associated with the current buffer is
 used."

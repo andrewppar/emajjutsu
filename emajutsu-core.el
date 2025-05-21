@@ -19,15 +19,18 @@
 (defconst emajutsu/jj
   (string-trim (shell-command-to-string "which jj")))
 
+
+
 (defun emajutsu-core--execute-internal (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
-  (when subcommand (push subcommand args))
-  (push command args)
-  (push emajutsu/jj args)
-  (let ((response (shell-command-to-string (string-join args " "))))
-    (if (string-prefix-p "Error:" response)
-	(error response)
-      response)))
+  (let ((default-directory (string-trim (shell-command-to-string "jj root"))))
+    (when subcommand (push subcommand args))
+    (push command args)
+    (push emajutsu/jj args)
+    (let ((response (shell-command-to-string (string-join args " "))))
+      (if (string-prefix-p "Error:" response)
+	  (error response)
+	response))))
 
 (defun emajutsu-core--parse-file-line (line)
   "Structured output of LINE representing a file."
