@@ -20,6 +20,7 @@
 
 (defconst emajjutsu-face/modified-file (list :foreground "#94e2d5"))
 (defconst emajjutsu-face/added-file (list :foreground "#a6e3a1"))
+(defconst emajjutsu-face/copied-file (list :foreground "#a6e3a1"))
 (defconst emajjutsu-face/deleted-file (list :foreground "#f38ba8"))
 (defconst emajjutsu-face/conflict (list :foreground "#f38ba8"))
 (defconst emajjutsu-face/empty-change (list :foreground "#a6e3a1"))
@@ -41,12 +42,14 @@
 	 (let ((status-string (cl-case status
 				(:added "A")
 				(:modified "M")
+				(:copied "C")
 				(:deleted "D")
 				(:renamed "R"))))
 	   (propertize (format "%s %s" status-string file)
 		       'face
 		       (cl-case status
 			 (:added emajjutsu-face/added-file)
+			 (:copied emajjutsu-face/copied-file)
 			 (:modified emajjutsu-face/modified-file)
 			 (:deleted emajjutsu-face/deleted-file)
 			 (:renamed emajjutsu-face/modified-file))))))

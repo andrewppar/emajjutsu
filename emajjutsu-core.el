@@ -19,8 +19,6 @@
 (defconst emajjutsu/jj
   (string-trim (shell-command-to-string "which jj")))
 
-
-
 (defun emajjutsu-core--execute-internal (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
   (let ((default-directory (string-trim (shell-command-to-string "jj root"))))
@@ -37,6 +35,7 @@
   (let ((mod-status (cond
 		      ((string-prefix-p "A" line) :added)
 		      ((string-prefix-p "M" line) :modified)
+		      ((string-prefix-p "C" line) :copied)
 		      ((string-prefix-p "D" line) :deleted)
 		      ((string-prefix-p "R" line) :renamed)
 		      (t nil))))
@@ -63,11 +62,13 @@
 This includes: change and commit ids and description"
   (json-parse-string
    (string-replace
-    "\n" "\\n"
-    (emajjutsu-core--execute-internal
-     "log" nil "--no-graph"
-     "-r" commit-or-change
-     "-T" emajjutsu-core--commit-template))
+    "" "\\n"
+    (string-replace
+     "\n" "\\n"
+     (emajjutsu-core--execute-internal
+      "log" nil "--no-graph"
+      "-r" commit-or-change
+      "-T" emajjutsu-core--commit-template)))
    :object-type 'plist
    :array-type 'list))
 
