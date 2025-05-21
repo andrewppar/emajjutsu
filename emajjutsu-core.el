@@ -53,8 +53,11 @@
     :conflict "conflict"
     :empty "empty"
     :immutable "immutable"
+    :bookmarks (list :local (list :map "x" "x" "local_bookmarks")
+		     :remote (list :map "x" "x" "remote_bookmarks"))
+    :conflict "conflict"
     :parents (list :map "x" "x.commit_id().shortest()" "parents")
-    :description "if(description, description, \" \")")))
+    :description "if(description, description.first_line(), \" \")")))
 
 (defun emajjutsu-core/change-status (commit-or-change)
   "Get information for COMMIT-OR-CHANGE.
@@ -71,6 +74,22 @@ This includes: change and commit ids and description"
       "-T" emajjutsu-core--commit-template)))
    :object-type 'plist
    :array-type 'list))
+
+(defun emajjutsu-core/conflicts (commit-or-change)
+  "Get conflicting file paths for COMMIT-OR-CHANGE."
+  (seq-reduce
+   (lambda (acc line)
+     (if (equal (substring line 1 2) "C")
+	 (cons (string-join (cdr (split-string line " ")) " ") acc)
+       acc))
+   (split-string
+    (emajjutsu-core--execute-internal
+     "log" nil
+     "--no-graph" "--types"
+     "--template" "' '"
+     "-r" commit-or-change)
+    "\n" t " ")
+   '()))
 
 (defun emajjutsu-core/change-files (commit-or-change)
   "Get details about the commit with COMMIT-OR-CHANGE id or unique prefix."
