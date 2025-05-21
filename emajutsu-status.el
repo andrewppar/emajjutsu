@@ -222,8 +222,5 @@ used."
 
 (defun emajutsu-status--mark-change-at-point ())
 
-
-
-
 (provide 'emajutsu-status)
 ;;; emajutsu-status.el ends here

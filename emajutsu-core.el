@@ -43,6 +43,20 @@
     (list :status mod-status
 	  :file (string-trim (substring line 1)))))
 
+(defconst emajutsu-core--commit-template
+  (emajutsu-template/build
+   (list
+    :change-id "change_id.short()"
+    :commit-id "commit_id.short()"
+    :short-change "change_id.shortest()"
+    :short-commit "commit_id.shortest()"
+    :current "current_working_copy"
+    :conflict "conflict"
+    :empty "empty"
+    :immutable "immutable"
+    :parents (list :map "x" "x.commit_id().shortest()" "parents")
+    :description "if(description, description, \" \")")))
+
 (defun emajutsu-core/change-status (commit-or-change)
   "Get information for COMMIT-OR-CHANGE.
 
@@ -51,19 +65,9 @@ This includes: change and commit ids and description"
    (string-replace
     "\n" "\\n"
     (emajutsu-core--execute-internal
-     "log" nil "--no-graph" "-r" commit-or-change "-T"
-     (emajutsu-template/build
-      (list
-       :change-id "change_id.short()"
-       :commit-id "commit_id.short()"
-       :short-change "change_id.shortest()"
-       :short-commit "commit_id.shortest()"
-       :current "current_working_copy"
-       :conflict "conflict"
-       :empty "empty"
-       :immutable "immutable"
-       :parents (list :map "x" "x.commit_id().shortest()" "parents")
-       :description "if(description, description, \" \")"))))
+     "log" nil "--no-graph"
+     "-r" commit-or-change
+     "-T" emajutsu-core--commit-template))
    :object-type 'plist
    :array-type 'list))
 
@@ -79,6 +83,26 @@ This includes: change and commit ids and description"
 (defun emajutsu-core/edit (commit-or-change)
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
   (emajutsu-core--execute-internal "edit" "-r" commit-or-change))
+
+(defun emajutsu-core/log-tree ()
+  "Get the jj string representing a log tree.
+
+That is all of the lines connecting nodes, with only change ids at nodes."
+  (emajutsu-core--execute-internal "log" nil "--template" "'commit_id.short()'"))
+
+(defun emajutsu-core/log-commits ()
+  "Create a json object for each commit in jj log."
+  (let* ((comma-separated-response (thread-last
+				    emajutsu-core--commit-template
+				    (emajutsu-core--execute-internal
+				     "log" nil "--no-graph" "--template")
+				    (string-replace "}" "},")))
+	 (as-json-string (thread-last
+			   (- (length comma-separated-response) 1)
+			      (substring comma-separated-response 0)
+			      (format "[%s]"))))
+    (json-parse-string as-json-string :object-type 'plist :array-type 'list)))
+
 
 (provide 'emajutsu-core)
 ;;; emajutsu-core.el ends here
