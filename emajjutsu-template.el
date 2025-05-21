@@ -1,4 +1,4 @@
-;;; emajutsu-template.el -- emacs-lisp wrapper for jj templates -*- lexical-binding: t -*-
+;;; emajjutsu-template.el -- emacs-lisp wrapper for jj templates -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025-2025 Andrew Parisi
 
@@ -57,9 +57,9 @@
 	  (emj-template--list template-spec))
 	 (t nil)))
 
-(defun emajutsu-template/build (template-spec)
+(defun emajjutsu-template/build (template-spec)
   "Finalize TEMPLATE-SPEC as an jujutsu template."
   (format "'%s'" (emj-template--parse template-spec)))
 
-(provide 'emajutsu-template)
-;;; emajutsu-template.el ends here
+(provide 'emajjutsu-template)
+;;; emajjutsu-template.el ends here

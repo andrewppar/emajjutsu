@@ -1,4 +1,4 @@
-;;; emajutsu-core.el -- make calls to jujutsu -*- lexical-binding: t -*-
+;;; emajjutsu-core.el -- make calls to jujutsu -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025-2025 Andrew Parisi
 
@@ -14,25 +14,25 @@
 ;; Execute jj commands from within Emacs
 
 ;;; Code:
-(require 'emajutsu-template)
+(require 'emajjutsu-template)
 
-(defconst emajutsu/jj
+(defconst emajjutsu/jj
   (string-trim (shell-command-to-string "which jj")))
 
 
 
-(defun emajutsu-core--execute-internal (command subcommand &rest args)
+(defun emajjutsu-core--execute-internal (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
   (let ((default-directory (string-trim (shell-command-to-string "jj root"))))
     (when subcommand (push subcommand args))
     (push command args)
-    (push emajutsu/jj args)
+    (push emajjutsu/jj args)
     (let ((response (shell-command-to-string (string-join args " "))))
       (if (string-prefix-p "Error:" response)
 	  (error response)
 	response))))
 
-(defun emajutsu-core--parse-file-line (line)
+(defun emajjutsu-core--parse-file-line (line)
   "Structured output of LINE representing a file."
   (let ((mod-status (cond
 		      ((string-prefix-p "A" line) :added)
@@ -43,8 +43,8 @@
     (list :status mod-status
 	  :file (string-trim (substring line 1)))))
 
-(defconst emajutsu-core--commit-template
-  (emajutsu-template/build
+(defconst emajjutsu-core--commit-template
+  (emajjutsu-template/build
    (list
     :change-id "change_id.short()"
     :commit-id "commit_id.short()"
@@ -57,44 +57,44 @@
     :parents (list :map "x" "x.commit_id().shortest()" "parents")
     :description "if(description, description, \" \")")))
 
-(defun emajutsu-core/change-status (commit-or-change)
+(defun emajjutsu-core/change-status (commit-or-change)
   "Get information for COMMIT-OR-CHANGE.
 
 This includes: change and commit ids and description"
   (json-parse-string
    (string-replace
     "\n" "\\n"
-    (emajutsu-core--execute-internal
+    (emajjutsu-core--execute-internal
      "log" nil "--no-graph"
      "-r" commit-or-change
-     "-T" emajutsu-core--commit-template))
+     "-T" emajjutsu-core--commit-template))
    :object-type 'plist
    :array-type 'list))
 
-(defun emajutsu-core/change-files (commit-or-change)
+(defun emajjutsu-core/change-files (commit-or-change)
   "Get details about the commit with COMMIT-OR-CHANGE id or unique prefix."
   (mapcar
-   #'emajutsu-core--parse-file-line
+   #'emajjutsu-core--parse-file-line
    (split-string
-    (emajutsu-core--execute-internal
+    (emajjutsu-core--execute-internal
      "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
     "\n" t " ")))
 
-(defun emajutsu-core/edit (commit-or-change)
+(defun emajjutsu-core/edit (commit-or-change)
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
-  (emajutsu-core--execute-internal "edit" "-r" commit-or-change))
+  (emajjutsu-core--execute-internal "edit" "-r" commit-or-change))
 
-(defun emajutsu-core/log-tree ()
+(defun emajjutsu-core/log-tree ()
   "Get the jj string representing a log tree.
 
 That is all of the lines connecting nodes, with only change ids at nodes."
-  (emajutsu-core--execute-internal "log" nil "--template" "'commit_id.short()'"))
+  (emajjutsu-core--execute-internal "log" nil "--template" "'commit_id.short()'"))
 
-(defun emajutsu-core/log-commits ()
+(defun emajjutsu-core/log-commits ()
   "Create a json object for each commit in jj log."
   (let* ((comma-separated-response (thread-last
-				    emajutsu-core--commit-template
-				    (emajutsu-core--execute-internal
+				    emajjutsu-core--commit-template
+				    (emajjutsu-core--execute-internal
 				     "log" nil "--no-graph" "--template")
 				    (string-replace "}" "},")))
 	 (as-json-string (thread-last
@@ -104,5 +104,5 @@ That is all of the lines connecting nodes, with only change ids at nodes."
     (json-parse-string as-json-string :object-type 'plist :array-type 'list)))
 
 
-(provide 'emajutsu-core)
-;;; emajutsu-core.el ends here
+(provide 'emajjutsu-core)
+;;; emajjutsu-core.el ends here

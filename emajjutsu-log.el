@@ -1,4 +1,4 @@
-;;; emajutsu-log.el -- create a log view like jj log -*- lexical-binding: t -*-
+;;; emajjutsu-log.el -- create a log view like jj log -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025-2025 Andrew Parisi
 
@@ -14,4 +14,4 @@
 ;; View jujutsu logs
 
 ;;; Code:
-(require 'emajutsu-status)
+(require 'emajjutsu-status)

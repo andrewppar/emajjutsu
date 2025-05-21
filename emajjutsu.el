@@ -1,4 +1,4 @@
-;;; emajutsu.el -- jujutsu bindings for emacs -*- lexical-binding: t -*-
+;;; emajjutsu.el -- jujutsu bindings for emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2025-2025 Andrew Parisi
 
@@ -14,16 +14,16 @@
 ;; Execute jj commands from within Emacs
 
 ;;; Code:
-(require 'emajutsu-status)
+(require 'emajjutsu-status)
 
 ;;;###autoload
-(defun emajutsu/status (&optional change-id)
+(defun emajjutsu/status (&optional change-id)
   "View the status of CHANGE-ID."
   (interactive
    (list
     (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
-    (emajutsu-status/status id)))
+    (emajjutsu-status/status id)))
 
-(provide 'emajutsu)
-;;; emajutsu.el ends here
+(provide 'emajjutsu)
+;;; emajjutsu.el ends here
