@@ -16,21 +16,9 @@
 ;;; Code:
 (require 'subr-x)
 (require 'emajjutsu-core)
+(require 'emajjutsu-face)
+(require 'emajjutsu-display)
 (require 'cl-lib)
-
-(defconst emajjutsu-face/bookmark (list :foreground "#f5c2e7"))
-(defconst emajjutsu-face/modified-file (list :foreground "#94e2d5"))
-(defconst emajjutsu-face/added-file (list :foreground "#a6e3a1"))
-(defconst emajjutsu-face/copied-file (list :foreground "#a6e3a1"))
-(defconst emajjutsu-face/deleted-file (list :foreground "#f38ba8"))
-(defconst emajjutsu-face/conflict (list :foreground "#f38ba8"))
-(defconst emajjutsu-face/empty-change (list :foreground "#a6e3a1"))
-(defconst emajjutsu-face/empty-description (list :foreground "#f9e2af"))
-(defconst emajjutsu-face/description (list :foreground "#cdd6f4"))
-(defconst emajjutsu-face/change-short (list :weight 'bold :foreground "#f5c2e7"))
-(defconst emajjutsu-face/commit-short (list :weight 'bold :foreground "#89b4fa"))
-(defconst emajjutsu-face/warning (list :weight 'bold :foreground "#f9e2af"))
-(defconst emajjutsu-face/commit-or-change (list :foreground "#6c7086"))
 
 (defun emajjutsu-status--files (file-specs)
   "Create a string to represent the effected FILE-SPECS."
@@ -58,82 +46,12 @@
      file-specs))
    "\n"))
 
-(defun emajjutsu-display--colorize-id (change-spec change-type parent?)
-  "Display CHANGE-TYPE id for CHANGE-SPEC.
-Bold when PARENT?."
-  (let* ((id-key (cl-case change-type (:commit :commit-id) (:change :change-id)))
-	 (id (plist-get change-spec id-key))
-	 (short-key (cl-case change-type (:commit :short-commit) (:change :short-change)))
-	 (short-id (plist-get change-spec short-key))
-	 (short-face (cl-case change-type
-		       (:commit emajjutsu-face/commit-short)
-		       (:change emajjutsu-face/change-short)))
-	 (face (if parent?
-		   emajjutsu-face/commit-or-change
-		 (cons :weight (cons 'bold emajjutsu-face/commit-or-change)))))
-    (concat
-     (propertize short-id 'face short-face)
-     (propertize (substring id (length short-id)) 'face face))))
-
-(defun emajjutsu-display--bookmarks (change-spec)
-  "Format the bookmarks from CHANGE-SPEC."
-  (let* ((bookmarks (plist-get change-spec :bookmarks))
-	 (local-bookmarks (plist-get bookmarks :local))
-	 (remote-bookmarks (plist-get bookmarks :remote)))
-    (propertize
-     (cond (local-bookmarks
-	    (format "%s | " (string-join local-bookmarks " ")))
-	   (remote-bookmarks
-	    (format "%s | " (string-join remote-bookmarks " ")))
-	   (t ""))
-     'face emajjutsu-face/bookmark)))
-
-(defun emajjutsu-display--description (change-spec parent?)
-  "Format the descripition for CHANGE-SPEC, bolding if not PARENT?."
-  (let* ((empty-change? (equal (plist-get change-spec :emtpy) "true"))
-	 (description (string-replace "\n" " " (plist-get change-spec :description)))
-	 (empty-description? (equal description " "))
-	 (face (cond (empty-change? emajjutsu-face/empty-change)
-		     (empty-description? emajjutsu-face/empty-description)
-		     (t emajjutsu-face/description)))
-	 (result '()))
-    (if empty-description?
-	(push "(no description set)" result)
-      (push description result))
-    (when empty-change?
-      (push "(empty)" result))
-    (setq result
-	  (list
-	   (propertize (string-join result " ")
-		      'face
-		      (if parent?
-			  face
-			(cons :weight (cons 'bold face))))))
-    (when (equal (plist-get change-spec :conflict) "true")
-      (push (propertize "(conflict)" 'face emajjutsu-face/conflict) result))
-    (push (emajjutsu-display--bookmarks change-spec) result)
-    (setq result (string-join result " "))
-    result))
-
-(defun emajjutsu-status--change (change-spec parent?)
-  "Format information about the CHANGE-SPEC including whether it is PARENT?."
-  (cl-destructuring-bind (&key current &allow-other-keys)
-      change-spec
-    (let* ((current-tagline (if (equal current "true") "(@)" "(>)"))
-	   (parent-tagline (if parent? "Parent Commit :" "Working Copy  :"))
-	   (commit-id (emajjutsu-display--colorize-id change-spec :commit parent?))
-	   (change-id (emajjutsu-display--colorize-id change-spec :change parent?))
-	   (description (emajjutsu-display--description change-spec parent?)))
-    (string-join
-     (list current-tagline parent-tagline change-id commit-id description)
-     " "))))
-
 (defun emajjutsu-status--parents (parent-specs)
   "Create a representation of each spec in PARENT-SPECS."
   (string-join
    (mapcar
     (lambda (parent-spec)
-      (emajjutsu-status--change parent-spec t))
+      (emajjutsu-display/change parent-spec :parent? t))
     parent-specs)
    "\n"))
 
@@ -213,7 +131,7 @@ Bold when PARENT?."
 	(format "Directory: %s" default-directory)
 	""
 	(emajjutsu-status--files files)
-	(emajjutsu-status--change change nil)
+	(emajjutsu-display/change change)
 	(emajjutsu-status--parents (mapcar #'emajjutsu-core/change-status parents))
 	(emajjutsu-status--conflicts change-id change))
        "\n")))))

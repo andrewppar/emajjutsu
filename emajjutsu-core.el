@@ -47,6 +47,7 @@
    (list
     :change-id "change_id.short()"
     :commit-id "commit_id.short()"
+    :author "author.email()"
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
     :current "current_working_copy"
@@ -108,21 +109,20 @@ This includes: change and commit ids and description"
   "Get the jj string representing a log tree.
 
 That is all of the lines connecting nodes, with only change ids at nodes."
-  (emajjutsu-core--execute-internal "log" nil "--template" "'commit_id.short()'"))
+  (emajjutsu-core--execute-internal "log" nil "--template" "'change_id.short() ++ \"\n\n\"'"))
 
 (defun emajjutsu-core/log-commits ()
   "Create a json object for each commit in jj log."
-  (let* ((comma-separated-response (thread-last
-				    emajjutsu-core--commit-template
+  (let* ((template (format "%s ++ \"|||\"'"
+			   (substring emajjutsu-core--commit-template
+				      0 (- (length emajjutsu-core--commit-template) 1))))
+	 (comma-separated-response (replace-regexp-in-string
+				    (regexp-quote "|||") ","
 				    (emajjutsu-core--execute-internal
-				     "log" nil "--no-graph" "--template")
-				    (string-replace "}" "},")))
-	 (as-json-string (thread-last
-			   (- (length comma-separated-response) 1)
-			      (substring comma-separated-response 0)
-			      (format "[%s]"))))
+				     "log" nil "--no-graph" "--template" template)))
+	 (as-json-string (format "[%s]" (substring comma-separated-response 0
+						   (- (length comma-separated-response) 1)))))
     (json-parse-string as-json-string :object-type 'plist :array-type 'list)))
-
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

@@ -15,6 +15,7 @@
 
 ;;; Code:
 (require 'emajjutsu-status)
+(require 'emajjutsu-log)
 
 ;;;###autoload
 (defun emajjutsu/status (&optional change-id)
@@ -24,6 +25,12 @@
     (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
     (emajjutsu-status/status id)))
+
+;;;###autoload
+(defun emajjutsu/log ()
+  "View the log for @."
+  (interactive)
+  (emajjutsu-log/log))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
