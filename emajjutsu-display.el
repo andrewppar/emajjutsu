@@ -85,12 +85,13 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
 	   (commit-id (emajjutsu-display--colorize-id change-spec :commit parent?))
 	   (change-id (emajjutsu-display--colorize-id change-spec :change parent?))
 	   (description (emajjutsu-display--description change-spec parent?))
-	   (author (propertize author 'face emajjutsu-face/author)))
+	   (author (if author
+		       (propertize author 'face emajjutsu-face/author)
+		     "")))
       (string-join
        (if compact?
 	   (list change-id commit-id description)
-	 (string-join
-	  (list current-tagline parent-tagline change-id commit-id description)))
+	 (list current-tagline parent-tagline change-id commit-id description))
        " "))))
 
 (provide 'emajjutsu-display)

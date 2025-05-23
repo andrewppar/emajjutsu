@@ -76,10 +76,10 @@
 
 (defun emajjutsu-status--buffer->data--change-id (buffer)
   "Get the change-id for BUFFER in EMAJJUTSU-STATUS--BUFFER->DATA."
-  (thread-last emajjutsu-status--buffer->data
-	       (alist-get buffer)
-	       (alist-get :change)
-	       (alist-get :change-id)))
+  (thread-first
+    (alist-get buffer emajjutsu-status--buffer->data)
+    (plist-get :change)
+    (plist-get :change-id)))
 
 (defun emajjutsu-status/quit ()
   "Quit the current buffer."
@@ -178,6 +178,14 @@ used."
       (emajjutsu-status/status "@"))))
 
 (defun emajjutsu-status--mark-change-at-point ())
+
+(defun emajjutsu-status/describe (description)
+  "Write a DESCRIPTION for the commit at point."
+  (interactive
+   (list (read-string "describe change: ")))
+  (let ((change (emajjutsu-status--change-at-point)))
+    (emajjutsu-core/describe change description)
+    (emajjutsu-status/refresh-buffer)))
 
 (provide 'emajjutsu-status)
 ;;; emajjutsu-status.el ends here
