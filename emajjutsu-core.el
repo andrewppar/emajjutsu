@@ -15,6 +15,7 @@
 
 ;;; Code:
 (require 'emajjutsu-template)
+(require 'subr-x)
 
 (defconst emajjutsu/jj
   (string-trim (shell-command-to-string "which jj")))
@@ -111,7 +112,7 @@ This includes: change and commit ids and description"
 That is all of the lines connecting nodes, with only change ids at nodes."
   (emajjutsu-core--execute-internal "log" nil "--template" "'change_id.short() ++ \"\n\n\"'"))
 
-(defun emajjutsu-core/log-commits ()
+(defun emajjutsu-core/log-changes ()
   "Create a json object for each commit in jj log."
   (let* ((template (format "%s ++ \"|||\"'"
 			   (substring emajjutsu-core--commit-template
@@ -133,6 +134,18 @@ When FILEPATHS is NIL all changes are returned."
   "Set the description for COMMIT-OR-CHANGE-ID to DESCRIPTION."
   (emajjutsu-core--execute-internal
    "describe" nil "-r" commit-or-change-id "-m" (format "\"%s\"" description)))
+
+(defun emajjutsu-core/new
+    (source-commit-or-change-id &optional before-commit-or-change-id)
+  "Create a new change after SOURCE-COMMIT-OR-CHANGE-ID.
+Optionally ensure that it is inserted before BEFORE-COMMIT-OR-CHANGE-ID"
+  (if before-commit-or-change-id
+      (emajjutsu-core--execute-internal
+       "new" nil
+       "-r" source-commit-or-change-id
+       "--insert-before" before-commit-or-change-id)
+    (emajjutsu-core--execute-internal
+     "new" nil "-r" source-commit-or-change-id)))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

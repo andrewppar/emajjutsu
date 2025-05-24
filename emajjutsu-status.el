@@ -187,5 +187,8 @@ used."
     (emajjutsu-core/describe change description)
     (emajjutsu-status/refresh-buffer)))
 
+(defun emajjutsu-status/new ()
+  "Create a new commit")
+
 (provide 'emajjutsu-status)
 ;;; emajjutsu-status.el ends here

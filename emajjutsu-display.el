@@ -15,6 +15,7 @@
 
 ;;; Code:
 (require 'emajjutsu-face)
+(require 'emajjutsu-core)
 (require 'cl-lib)
 
 (defun emajjutsu-display--colorize-id (change-spec change-type parent?)
@@ -93,6 +94,25 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
 	   (list change-id commit-id description)
 	 (list current-tagline parent-tagline change-id commit-id description))
        " "))))
+
+(defun emajjutsu-display--selectable-change (change-spec)
+  "Create a display string for CHANGE-SPEC in change selection."
+  (cl-destructuring-bind
+	(&key change-id short-change description &allow-other-keys)
+      change-spec
+    (format "%s%s: %s"
+	    (propertize short-change 'face emajjutsu-face/change-short)
+	    (substring change-id (length short-change))
+	    description)))
+
+(defun emajjutsu-display/change-selection ()
+  "Interactively select a change-id."
+  (let ((selection (completing-read
+		    "Select a change: "
+		    (mapcar
+		     #'emajjutsu-display--selectable-change
+		     (emajjutsu-core/log-changes)))))
+    (car (split-string selection ":"))))
 
 (provide 'emajjutsu-display)
 ;;; emajjutsu-display.el ends here

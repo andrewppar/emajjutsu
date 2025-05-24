@@ -50,7 +50,7 @@
 	    (regexp-quote change-id)
 	    (emajjutsu-display/change change-spec :compact? t)
 	    acc)))
-       (emajjutsu-core/log-commits))))))
+       (emajjutsu-core/log-changes))))))
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
