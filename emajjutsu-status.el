@@ -136,7 +136,7 @@
 	(emajjutsu-status--conflicts change-id change))
        "\n")))))
 
-(defun emajjutsu-status--change-at-point ()
+(defun emajjutsu-status/change-at-point ()
   "Get the change id at point."
   (let ((line (buffer-substring-no-properties
 	       (line-beginning-position) (line-end-position))))
@@ -159,14 +159,14 @@
 (defun emajjutsu-status/follow-at-point ()
   "Call `emajjutsu-status/status` on the change-id for the line at point."
   (interactive)
-  (emajjutsu-status/status (emajjutsu-status--change-at-point)))
+  (emajjutsu-status/status (emajjutsu-status/change-at-point)))
 
 (defun emajjutsu-status/edit-at-point ()
   "Call jujutsu edit on the change under point.
 If one cannot be found the change associated with the current buffer is
 used."
   (interactive)
-  (if-let ((change-id (emajjutsu-status--change-at-point)))
+  (if-let ((change-id (emajjutsu-status/change-at-point)))
       (emajjutsu-core/edit change-id)
     (let* ((buffer-data (alist-get (current-buffer)
 				  emajjutsu-status--buffer->data nil nil #'equal))
@@ -183,7 +183,7 @@ used."
   "Write a DESCRIPTION for the commit at point."
   (interactive
    (list (read-string "describe change: ")))
-  (let ((change (emajjutsu-status--change-at-point)))
+  (let ((change (emajjutsu-status/change-at-point)))
     (emajjutsu-core/describe change description)
     (emajjutsu-status/refresh-buffer)))
 

@@ -27,11 +27,12 @@
 (defmacro emajjutsu-log--with-buffer (&rest body)
   "Rewrite the log buffer with BODY."
   `(unwind-protect
-	(let ((buffer (switch-to-buffer "*emajjutsu log*"))
-	      (inhibit-read-only t))
-	  (erase-buffer)
-	  (emajjutsu/log-mode)
-	  (progn ,@body))
+	(progn
+	  (switch-to-buffer "*emajjutsu log*")
+	  (let ((inhibit-read-only t))
+	    (erase-buffer)
+	    (emajjutsu/log-mode)
+	    (progn ,@body)))
      (read-only-mode 1)))
 
 (defun emajjutsu-log/log ()
@@ -39,18 +40,40 @@
   (interactive)
   (emajjutsu-log--with-buffer
    (insert
-    (thread-last
-      (emajjutsu-core/log-tree)
-      (string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
-      (string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))
-      (seq-reduce
-       (lambda (acc change-spec)
-	 (let ((change-id (plist-get change-spec :change-id)))
-	   (replace-regexp-in-string
-	    (regexp-quote change-id)
-	    (emajjutsu-display/change change-spec :compact? t)
-	    acc)))
-       (emajjutsu-core/log-changes))))))
+    (string-join
+     (list
+      (format "Directory: %s" default-directory)
+      ""
+      (thread-last
+	(emajjutsu-core/log-tree)
+	(string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
+	(string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))
+	(seq-reduce
+	 (lambda (acc change-spec)
+	   (let ((change-id (plist-get change-spec :change-id)))
+	     (replace-regexp-in-string
+	      (regexp-quote change-id)
+	      (emajjutsu-display/change change-spec :compact? t)
+	      acc)))
+	 (emajjutsu-core/log-changes))))
+     "\n"))
+   (goto-char (point-min))))
+
+(defun emajjutsu-log/refresh-buffer ()
+  "Refresh the log buffer."
+  (emajjutsu-log/log))
+
+(defun emajjutsu-log/change-at-point ()
+  "Get the change at point if it exists."
+  (let ((line (thread-last
+		(buffer-substring-no-properties
+		 (line-beginning-position) (line-end-position))
+		(replace-regexp-in-string (regexp-quote "│") "")
+		string-trim)))
+    (when (or (string-prefix-p "@" line)
+	      (string-prefix-p "◆" line)
+	      (string-prefix-p "○" line))
+      (cadr (split-string line " " t " ")))))
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
