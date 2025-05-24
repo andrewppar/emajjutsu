@@ -76,6 +76,15 @@ the empty string is treated as none."
 	 (emajjutsu-core/new source-change-id before)
        (emajjutsu-core/new source-change-id)))))
 
+;;;###autoload
+(defun emajjutsu/describe ()
+  "Describe the change at point, or specify the change."
+  (interactive)
+  (let ((change-id (or (emajjutsu--change-id-at-point)
+		       (emajjutsu-display/change-selection)))
+	(description (read-string "Describe change: ")))
+    (emajjutsu--with-buffer-refresh
+     (emajjutsu-core/describe change-id description))))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

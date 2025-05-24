@@ -47,6 +47,7 @@
       (thread-last
 	(emajjutsu-core/log-tree)
 	(string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
+	(string-replace (regexp-quote "×") (propertize "×" 'face emajjutsu-face/conflict))
 	(string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))
 	(seq-reduce
 	 (lambda (acc change-spec)

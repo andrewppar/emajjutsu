@@ -161,34 +161,5 @@
   (interactive)
   (emajjutsu-status/status (emajjutsu-status/change-at-point)))
 
-(defun emajjutsu-status/edit-at-point ()
-  "Call jujutsu edit on the change under point.
-If one cannot be found the change associated with the current buffer is
-used."
-  (interactive)
-  (if-let ((change-id (emajjutsu-status/change-at-point)))
-      (emajjutsu-core/edit change-id)
-    (let* ((buffer-data (alist-get (current-buffer)
-				  emajjutsu-status--buffer->data nil nil #'equal))
-	  (found-change-id (thread-first buffer-data
-					 (plist-get :change)
-					 (plist-get :change-id))))
-      (when found-change-id
-	(emajjutsu-core/edit found-change-id))
-      (emajjutsu-status/status "@"))))
-
-(defun emajjutsu-status--mark-change-at-point ())
-
-(defun emajjutsu-status/describe (description)
-  "Write a DESCRIPTION for the commit at point."
-  (interactive
-   (list (read-string "describe change: ")))
-  (let ((change (emajjutsu-status/change-at-point)))
-    (emajjutsu-core/describe change description)
-    (emajjutsu-status/refresh-buffer)))
-
-(defun emajjutsu-status/new ()
-  "Create a new commit")
-
 (provide 'emajjutsu-status)
 ;;; emajjutsu-status.el ends here
