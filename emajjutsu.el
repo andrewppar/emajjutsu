@@ -14,6 +14,7 @@
 ;; Execute jj commands from within Emacs
 
 ;;; Code:
+(require 'emajjutsu-display)
 (require 'emajjutsu-status)
 (require 'emajjutsu-log)
 
@@ -58,5 +59,23 @@
 		       (emajjutsu-display/change-selection))))
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/edit change-id))))
+
+;;;###autoload
+(defun emajjutsu/new ()
+  "Add a new change.
+If point is on a change in an emajjutsu buffer, use that as the base.
+Otherwise prompt for a base.  Prompt for a change to put the new change before,
+the empty string is treated as none."
+  (interactive)
+  (let ((source-change-id (or (emajjutsu--change-id-at-point)
+			      (emajjutsu-display/change-selection)))
+	(before-change-id (when (y-or-n-p "insert before? ")
+			    (emajjutsu-display/change-selection "Insert before: "))))
+    (emajjutsu--with-buffer-refresh
+     (if before-change-id
+	 (emajjutsu-core/new source-change-id before)
+       (emajjutsu-core/new source-change-id)))))
+
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

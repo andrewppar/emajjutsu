@@ -48,7 +48,7 @@
    (list
     :change-id "change_id.short()"
     :commit-id "commit_id.short()"
-    :author "author.email()"
+    :author "coalesce(author.email(), \" \")"
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
     :current "current_working_copy"
@@ -59,7 +59,7 @@
 		     :remote (list :map "x" "x" "remote_bookmarks"))
     :conflict "conflict"
     :parents (list :map "x" "x.commit_id().shortest()" "parents")
-    :description "if(description, description.first_line(), \" \")")))
+    :description "coalesce(description.first_line(), \" \")")))
 
 (defun emajjutsu-core/change-status (commit-or-change)
   "Get information for COMMIT-OR-CHANGE.
@@ -142,10 +142,10 @@ Optionally ensure that it is inserted before BEFORE-COMMIT-OR-CHANGE-ID"
   (if before-commit-or-change-id
       (emajjutsu-core--execute-internal
        "new" nil
-       "-r" source-commit-or-change-id
+       "--insert-after" source-commit-or-change-id
        "--insert-before" before-commit-or-change-id)
     (emajjutsu-core--execute-internal
-     "new" nil "-r" source-commit-or-change-id)))
+     "new" nil "--insert-after" source-commit-or-change-id)))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
