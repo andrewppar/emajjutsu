@@ -128,7 +128,11 @@ That is all of the lines connecting nodes, with only change ids at nodes."
 (defun emajjutsu-core/diff (commit-or-change-id &optional filepaths)
   "Get the diff for COMMIT-OR-CHANGE-ID optionally also specify FILEPATHS.
 When FILEPATHS is NIL all changes are returned."
-  (emajjutsu-core--execute-internal "diff" filepaths "-r" commit-or-change-id))
+  (let ((args (list "--git" "-r" commit-or-change-id)))
+    (dolist (filepath filepaths)
+      (push filepath args))
+    (push "diff" args)
+    (apply #'emajjutsu-core--execute-internal args)))
 
 (defun emajjutsu-core/describe (commit-or-change-id description)
   "Set the description for COMMIT-OR-CHANGE-ID to DESCRIPTION."

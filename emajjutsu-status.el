@@ -148,6 +148,25 @@
 		    (split-string " " t " ")
 		    car))))
 
+(defun emajjutsu-status--diff ()
+  "Show a diff of the file at point."
+  (let* ((line (string-trim
+		(buffer-substring-no-properties
+		 (line-beginning-position) (line-end-position))))
+	 (file (if (seq-some
+		    (lambda (prefix) (string-prefix-p prefix line))
+		    ;; add these to some defconst
+		    (list "A " "M " "C " "D " "R "))
+		   (string-join (cdr (string-split line " " t " ")) " ")
+		 (read-file-name "Select a file to diff: ")))
+	 (change-id (emajjutsu-status--buffer->data--change-id
+		     (current-buffer))))
+    (split-window-sensibly)
+    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
+    (erase-buffer)
+    (insert (emajjutsu-core/diff change-id (list file)))
+    (diff-mode)))
+
 (defun emajjutsu-status/refresh-buffer ()
   "Refresh the status on the current buffer."
   (interactive)
