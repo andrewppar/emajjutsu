@@ -52,14 +52,13 @@
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
     :current "current_working_copy"
-    :conflict "conflict"
     :empty "empty"
     :immutable "immutable"
     :bookmarks (list :local (list :map "x" "x" "local_bookmarks")
-		     :remote (list :map "x" "x" "remote_bookmarks"))
+   		     :remote (list :map "x" "x" "remote_bookmarks"))
     :conflict "conflict"
     :parents (list :map "x" "x.commit_id().shortest()" "parents")
-    :description "coalesce(description.first_line(), \" \")")))
+    :description (list :expression "coalesce(description.first_line().escape_json(), \" \")"))))
 
 (defun emajjutsu-core/change-status (commit-or-change)
   "Get information for COMMIT-OR-CHANGE.

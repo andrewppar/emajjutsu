@@ -19,6 +19,10 @@
   "Stringify ITEM."
   (format "surround(\"\\\"\", \"\\\"\", %s)" item))
 
+(defun emj-template--expression (item)
+  "Return ITEM as-is."
+  (format "%s" item))
+
 (defun emj-template--list (items)
   "Create a list of ITEMS for a jujutsu template."
   (format "surround(\"[\", \"]\", separate(\",\", %s))"
@@ -37,7 +41,8 @@
 	    (lambda (pair)
 	      (format "concat(%s, \": \", %s)"
 		      (emj-template--atom
-		       (format "\"%s\"" (substring (format "%s" (car pair)) 1)))
+		       (format "\"%s\""
+			       (substring (format "%s" (car pair)) 1)))
 		      (emj-template--parse (cadr pair))))
 	    (seq-partition key-value-pairs 2))
 	   ",")))
@@ -51,6 +56,8 @@
 		(fn (caddr template-spec))
 		(list-expr (cadddr template-spec)))
 	    (emj-template--map variable fn list-expr)))
+	 ((and (listp template-spec) (equal (car template-spec) :expression))
+	  (emj-template--expression (cdr template-spec)))
 	 ((plistp template-spec)
 	  (emj-template--object template-spec))
 	 ((listp template-spec)
