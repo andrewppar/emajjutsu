@@ -31,7 +31,7 @@
 (defun emj-template--map (var expression list-expression)
   "Create a json list by mapping EXPRESSION containing VAR over LIST-EXPRESSION."
   (format "coalesce(surround(\"[\", \"]\", %s.map(|%s| %s).join(\",\")), \"[]\")"
-	  list-expression var (emj-template--atom expression)))
+	  list-expression var (emj-template--parse expression)))
 
 (defun emj-template--object (key-value-pairs)
   "Create an object for KEY-VALUE-PAIRS."

@@ -86,5 +86,12 @@ the empty string is treated as none."
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/describe change-id description))))
 
+;;;###autoload
+(defun emajjutsu/bookmark-set ()
+  "Move bookmark to the change at point.
+
+If the bookmark does not exist, create it."
+  ())
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
