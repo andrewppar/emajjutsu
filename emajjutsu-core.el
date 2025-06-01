@@ -52,11 +52,11 @@
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
     :current "current_working_copy"
-    :empty "empty"
-    :immutable "immutable"
+    :empty (list :expression "empty")
+    :immutable (list :expression "immutable")
     :bookmarks (list :local (list :map "x" "x" "local_bookmarks")
    		     :remote (list :map "x" "x" "remote_bookmarks"))
-    :conflict "conflict"
+    :conflict (list :expression "conflict")
     :parents (list :map "x" "x.commit_id().shortest()" "parents")
     :description (list :expression "coalesce(description.first_line().escape_json(), \" \")"))))
 

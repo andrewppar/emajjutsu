@@ -97,7 +97,7 @@
   "Generate a conflict string for CHANGE-ID and CHANGE."
   (cl-destructuring-bind (&key conflict &allow-other-keys)
       change
-    (if (equal conflict "true")
+    (if conflict
 	(string-join
 	 (cons
 	  (format "%s There are unresolved conflicts at these paths:"

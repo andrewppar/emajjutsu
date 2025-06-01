@@ -50,7 +50,7 @@ Bold when PARENT?."
 
 (defun emajjutsu-display--description (change-spec parent?)
   "Format the descripition for CHANGE-SPEC, bolding if not PARENT?."
-  (let* ((empty-change? (equal (plist-get change-spec :empty) "true"))
+  (let* ((empty-change? (plist-get change-spec :empty))
 	 (description (string-replace "\n" " " (plist-get change-spec :description)))
 	 (empty-description? (equal description " "))
 	 (face (cond (empty-change? emajjutsu-face/empty-change)
