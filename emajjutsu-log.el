@@ -35,9 +35,14 @@
 	    (progn ,@body)))
      (read-only-mode 1)))
 
-(defun emajjutsu-log/log ()
-  "Create a buffer that displays the jj log."
+(defconst emajjutsu-log--current-limit nil
+  "The limit that was passed to emajjutsu-log/log.")
+
+(defun emajjutsu-log/log (limit)
+  "Create a buffer that displays the jj log with LIMIT.
+If LIMIT is NIL it is treated as though there is none."
   (interactive)
+  (setq emajjutsu-log--current-limit limit)
   (emajjutsu-log--with-buffer
    (insert
     (string-join
@@ -45,7 +50,7 @@
       (format "Directory: %s" default-directory)
       ""
       (thread-last
-	(emajjutsu-core/log-tree)
+	(emajjutsu-core/log-tree limit)
 	(string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
 	(string-replace (regexp-quote "×") (propertize "×" 'face emajjutsu-face/conflict))
 	(string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))
@@ -56,13 +61,13 @@
 	      (regexp-quote change-id)
 	      (emajjutsu-display/change change-spec :compact? t)
 	      acc)))
-	 (emajjutsu-core/log-changes))))
+	 (emajjutsu-core/log-changes nil))))
      "\n"))
    (goto-char (point-min))))
 
 (defun emajjutsu-log/refresh-buffer ()
   "Refresh the log buffer."
-  (emajjutsu-log/log))
+  (emajjutsu-log/log emajjutsu-log--current-limit))
 
 (defun emajjutsu-log/change-at-point ()
   "Get the change at point if it exists."

@@ -27,11 +27,19 @@
   (let ((id (if (equal change-id "") "@" change-id)))
     (emajjutsu-status/status id)))
 
+(defun emajjutsu--read-limit ()
+  "Read a limit from the user."
+  (let* ((limit (string-to-number (read-string "limit: "))))
+    (unless (= limit 0)
+      limit)))
+
 ;;;###autoload
-(defun emajjutsu/log ()
-  "View the log for @."
-  (interactive)
-  (emajjutsu-log/log))
+(defun emajjutsu/log (limit)
+  "View the log for @.
+Optionaly specify LIMIT."
+  (interactive
+   (list (emajjutsu--read-limit)))
+  (emajjutsu-log/log limit)))
 
 (defun emajjutsu--change-id-at-point ()
   "Get the change id at point if it exists."

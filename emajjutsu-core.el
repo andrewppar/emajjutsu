@@ -106,17 +106,30 @@ This includes: change and commit ids and description"
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
   (emajjutsu-core--execute-internal "edit" "-r" commit-or-change))
 
-(defun emajjutsu-core/log-tree ()
+(defun emajjutsu-core/log-tree (limit)
   "Get the jj string representing a log tree.
 
-That is all of the lines connecting nodes, with only change ids at nodes."
-  (emajjutsu-core--execute-internal "log" nil "--template" "'change_id.short() ++ \"\n\n\"'"))
+That is all of the lines connecting nodes, with only change ids at nodes.
+LIMIT specifies the number of nodes to fetch."
+  (if limit
+      (emajjutsu-core--execute-internal
+       "log" nil
+       "--limit" (format "%s" limit)
+       "--template" "'change_id.short() ++ \"\n\n\"'")
+    (emajjutsu-core--execute-internal
+     "log" nil "--template" "'change_id.short() ++ \"\n\n\"'")))
 
-(defun emajjutsu-core/log-changes ()
-  "Create a json object for each commit in jj log."
+(defun emajjutsu-core/log-changes (limit)
+  "Create a json object for each commit in jj log with LIMIT."
   (let* ((template (format "%s ++ \"|||\"'"
 			   (substring emajjutsu-core--commit-template
 				      0 (- (length emajjutsu-core--commit-template) 1))))
+	 (response (if limit
+		       (emajjutsu-core--execute-internal
+			"log" nil "--no-graph"
+			"--limit" (format "%s" limit)  "--template" template)
+		     (emajjutsu-core--execute-internal
+		      "log" nil "--no-graph" "--template" template)))
 	 (comma-separated-response (replace-regexp-in-string
 				    (regexp-quote "|||") "," response))
 	 (as-json-string (format "[%s]"
