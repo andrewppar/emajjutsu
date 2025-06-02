@@ -74,6 +74,7 @@ This includes: change and commit ids and description"
       "-r" commit-or-change
       "-T" emajjutsu-core--commit-template)))
    :object-type 'plist
+   :false-object nil
    :array-type 'list))
 
 (defun emajjutsu-core/conflicts (commit-or-change)
