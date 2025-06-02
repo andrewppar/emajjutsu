@@ -118,12 +118,14 @@ That is all of the lines connecting nodes, with only change ids at nodes."
 			   (substring emajjutsu-core--commit-template
 				      0 (- (length emajjutsu-core--commit-template) 1))))
 	 (comma-separated-response (replace-regexp-in-string
-				    (regexp-quote "|||") ","
-				    (emajjutsu-core--execute-internal
-				     "log" nil "--no-graph" "--template" template)))
-	 (as-json-string (format "[%s]" (substring comma-separated-response 0
-						   (- (length comma-separated-response) 1)))))
-    (json-parse-string as-json-string :object-type 'plist :array-type 'list)))
+				    (regexp-quote "|||") "," response))
+	 (as-json-string (format "[%s]"
+				 (substring comma-separated-response
+					    0 (- (length comma-separated-response) 1)))))
+    (json-parse-string as-json-string
+		       :object-type 'plist
+		       :array-type 'list
+		       :false-object nil)))
 
 (defun emajjutsu-core/diff (commit-or-change-id &optional filepaths)
   "Get the diff for COMMIT-OR-CHANGE-ID optionally also specify FILEPATHS.
