@@ -100,12 +100,40 @@ Only for status."
   (interactive)
   (emajjutsu-status/diff))
 
+
+(defun emajjutsu/bookmarks ()
+  "List bookmarks in repo."
+  )
+
+(defun emajjutsu/bookmark-delete (bookmark)
+  "Delete BOOKMARK."
+  (interactive
+   (list
+    (completing-read
+     "bookmarks: "
+     (mapcar
+      (lambda (bookmark) (plist-get bookmark :name))
+      (emajjutsu-core/bookmark-list)))))
+  (emajjutsu--with-buffer-refresh
+  (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
+    (emajjutsu-core/bookmark-delete bookmark))))
+
 ;;;###autoload
 (defun emajjutsu/bookmark-set ()
   "Move bookmark to the change at point.
-
 If the bookmark does not exist, create it."
-  ())
+  (interactive)
+
+  (let* ((bookmarks (mapcar
+		     (lambda (bookmark) (plist-get bookmark :name))
+		     (emajjutsu-core/bookmark-list)))
+	 (bookmark (completing-read "bookmarks: " bookmarks))
+	 (change-id (or (emajjutsu--change-id-at-point)
+			(emajjutsu-display/change-selection))))
+    (emajjutsu--with-buffer-refresh
+     (if (member bookmark bookmarks)
+	 (emajjutsu-core/bookmark-set bookmark change-id)
+       (emajjutsu-core/bookmark-create bookmark change-id)))))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

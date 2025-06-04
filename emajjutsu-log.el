@@ -81,5 +81,7 @@ If LIMIT is NIL it is treated as though there is none."
 	      (string-prefix-p "○" line))
       (cadr (split-string line " " t " ")))))
 
+
+
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here

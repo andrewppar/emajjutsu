@@ -166,5 +166,34 @@ Optionally ensure that it is inserted before BEFORE-COMMIT-OR-CHANGE-ID"
     (emajjutsu-core--execute-internal
      "new" nil "--insert-after" source-commit-or-change-id)))
 
+(defun emajjutsu-core/bookmark-list ()
+  "Get a list of the bookmarks in repo."
+  (let* ((base-template (emajjutsu-template/build
+			 (list :name (list :expression "name.escape_json()"))))
+	 (response (emajjutsu-core--execute-internal
+		    "bookmark" "list" "--template"
+		    (format "%s ++ \"|||\"'" (substring base-template 0 -1)))))
+    (unless (string-empty-p response)
+      (let ((comma-separated (replace-regexp-in-string
+			      (regexp-quote "|||") "," response)))
+	(json-parse-string (format "[%s]" (substring comma-separated 0 -1))
+			   :object-type 'plist
+			   :array-type 'list
+			   :false-object nil)))))
+
+(defun emajjutsu-core/bookmark-set (bookmark change-id)
+  "Set BOOKMARK at CHANGE-ID."
+  (emajjutsu-core--execute-internal
+   "bookmark" "set" bookmark "-r" change-id))
+
+(defun emajjutsu-core/bookmark-create (bookmark-name change-id)
+  "Create a bookmark with BOOKMARK-NAME at CHANGE-ID."
+  (emajjutsu-core--execute-internal
+   "bookmark" "create" bookmark-name "-r" change-id))
+
+(defun emajjutsu-core/bookmark-delete (bookmark)
+  "Delete BOOKMARK."
+  (emajjutsu-core--execute-internal "bookmark" "delete" bookmark))
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
