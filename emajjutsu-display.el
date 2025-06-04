@@ -52,7 +52,7 @@ Bold when PARENT?."
   "Format the descripition for CHANGE-SPEC, bolding if not PARENT?."
   (let* ((empty-change? (plist-get change-spec :empty))
 	 (description (string-replace "\n" " " (plist-get change-spec :description)))
-	 (empty-description? (equal description " "))
+	 (empty-description? (equal description ""))
 	 (face (cond (empty-change? emajjutsu-face/empty-change)
 		     (empty-description? emajjutsu-face/empty-description)
 		     (t emajjutsu-face/description)))

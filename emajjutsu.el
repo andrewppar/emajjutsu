@@ -135,6 +135,16 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (message "refreshing...")))
 
+(defun emajjutsu/rebase-source ()
+  "Rebase the change at point onto a selected change as SOURCE."
+  (interactive)
+  (let ((source-change (or (emajjutsu--change-id-at-point)
+			   (emajjutsu-display/change-selection)))
+	(target-change (emajjutsu-display/change-selection
+			"rebase destination: ")))
+    (emajjutsu--with-buffer-refresh
+     (emajjutsu-core/rebase-source
+      source-change target-change :destination))))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

@@ -11,7 +11,7 @@
 
 ;;; Commentary:
 
-;; View jujutsu logs
+;; bookmark management for jj
 
 ;;; Code:
 

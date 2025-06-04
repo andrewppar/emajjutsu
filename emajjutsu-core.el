@@ -188,5 +188,17 @@ When FILEPATHS is NIL all changes are returned."
   "Delete BOOKMARK."
   (emajjutsu-core--execute-internal "bookmark" "delete" bookmark))
 
+(defun emajjutsu-core/rebase-source (source-change target-change location)
+  "Rebase SOURCE-CHANGE (and its descendants) to TARGET-CHANGE.
+LOCATION specifies where the rebase will be located with respect to
+TARGET-COMMIT."
+  (let ((location-flag (pcase location
+			 (:after "--insert-after")
+			 (:before "--insert-before")
+			 (_ "--destination"))))
+    (emajjutsu-core--execute-internal
+     "rebase" nil "--source" source-change location-flag target-change)))
+
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
