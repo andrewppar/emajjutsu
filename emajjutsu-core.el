@@ -155,16 +155,9 @@ When FILEPATHS is NIL all changes are returned."
    "describe" nil "-r" commit-or-change-id "-m" (format "\"%s\"" description)))
 
 (defun emajjutsu-core/new
-    (source-commit-or-change-id &optional before-commit-or-change-id)
-  "Create a new change after SOURCE-COMMIT-OR-CHANGE-ID.
-Optionally ensure that it is inserted before BEFORE-COMMIT-OR-CHANGE-ID"
-  (if before-commit-or-change-id
-      (emajjutsu-core--execute-internal
-       "new" nil
-       "--insert-after" source-commit-or-change-id
-       "--insert-before" before-commit-or-change-id)
-    (emajjutsu-core--execute-internal
-     "new" nil "--insert-after" source-commit-or-change-id)))
+    (source-commit-or-change-id)
+  "Create a new change after SOURCE-COMMIT-OR-CHANGE-ID."
+  (emajjutsu-core--execute-internal "new" source-commit-or-change-id))
 
 (defun emajjutsu-core/bookmark-list ()
   "Get a list of the bookmarks in repo."

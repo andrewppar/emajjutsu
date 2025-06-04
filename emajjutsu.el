@@ -71,18 +71,13 @@ Optionaly specify LIMIT."
 ;;;###autoload
 (defun emajjutsu/new ()
   "Add a new change.
-If point is on a change in an emajjutsu buffer, use that as the base.
-Otherwise prompt for a base.  Prompt for a change to put the new change before,
-the empty string is treated as none."
+If point is on a change in an emajjutsu buffer, use that as the parent.
+Otherwise prompt for a parent."
   (interactive)
   (let ((source-change-id (or (emajjutsu--change-id-at-point)
-			      (emajjutsu-display/change-selection)))
-	(before-change-id (when (y-or-n-p "insert before? ")
-			    (emajjutsu-display/change-selection "Insert before: "))))
+			      (emajjutsu-display/change-selection))))
     (emajjutsu--with-buffer-refresh
-     (if before-change-id
-	 (emajjutsu-core/new source-change-id before)
-       (emajjutsu-core/new source-change-id)))))
+     (emajjutsu-core/new source-change-id))))
 
 ;;;###autoload
 (defun emajjutsu/describe ()

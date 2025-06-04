@@ -113,7 +113,7 @@ Optionally supply a PROMPT."
 		     selection-prompt
 		     (mapcar
 		      #'emajjutsu-display--selectable-change
-		      (emajjutsu-core/log-changes)))))
+		      (emajjutsu-core/log-changes nil)))))
     (car (split-string selection ":"))))
 
 (provide 'emajjutsu-display)
