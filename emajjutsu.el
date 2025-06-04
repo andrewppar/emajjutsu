@@ -39,7 +39,7 @@
 Optionaly specify LIMIT."
   (interactive
    (list (emajjutsu--read-limit)))
-  (emajjutsu-log/log limit)))
+  (emajjutsu-log/log limit))
 
 (defun emajjutsu--change-id-at-point ()
   "Get the change id at point if it exists."
@@ -56,7 +56,7 @@ Optionaly specify LIMIT."
      (cond ((equal major-mode 'emajjutsu/status-mode)
 	    (emajjutsu-status/status "@"))
 	   ((equal major-mode 'emajjutsu/log-mode)
-	    (emajjutsu-log/log))
+	    (emajjutsu-log/refresh-buffer))
 	   (t nil))))
 
 ;;;###autoload
@@ -93,6 +93,12 @@ the empty string is treated as none."
 	(description (read-string "Describe change: ")))
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/describe change-id description))))
+
+(defun emajjutsu/diff ()
+  "Get the diff of the change at point.
+Only for status."
+  (interactive)
+  (emajjutsu-status/diff))
 
 ;;;###autoload
 (defun emajjutsu/bookmark-set ()

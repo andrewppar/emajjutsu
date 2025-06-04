@@ -148,7 +148,7 @@
 		    (split-string " " t " ")
 		    car))))
 
-(defun emajjutsu-status--diff ()
+(defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
   (let* ((line (string-trim
 		(buffer-substring-no-properties
@@ -161,7 +161,6 @@
 		 (read-file-name "Select a file to diff: ")))
 	 (change-id (emajjutsu-status--buffer->data--change-id
 		     (current-buffer))))
-    (split-window-sensibly)
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
     (erase-buffer)
     (insert (emajjutsu-core/diff change-id (list file)))
