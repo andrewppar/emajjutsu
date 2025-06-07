@@ -199,6 +199,13 @@ TARGET-COMMIT."
     (emajjutsu-core--execute-internal
      "rebase" nil "--source" source-change location-flag target-change)))
 
+(defun emajjutsu-core/fetch ()
+  "Fetch from remote."
+  (emajjutsu-core--execute-internal "git" "fetch"))
+
+(defun emajjutsu-core/push ()
+  "Push current state to remote."
+  (emajjutsu-core--execute-internal "git" "push" "--allow-new"))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

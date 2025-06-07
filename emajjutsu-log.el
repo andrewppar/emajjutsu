@@ -65,6 +65,13 @@ If LIMIT is NIL it is treated as though there is none."
      "\n"))
    (goto-char (point-min))))
 
+(defun emajjutsu-log/quit ()
+  "Quit the current log buffer."
+  (interactive)
+  (setq emajjutsu-log--current-limit nil)
+  (kill-buffer)
+  (delete-window))
+
 (defun emajjutsu-log/refresh-buffer ()
   "Refresh the log buffer."
   (emajjutsu-log/log emajjutsu-log--current-limit))
@@ -80,8 +87,6 @@ If LIMIT is NIL it is treated as though there is none."
 	      (string-prefix-p "◆" line)
 	      (string-prefix-p "○" line))
       (cadr (split-string line " " t " ")))))
-
-
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here

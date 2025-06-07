@@ -25,6 +25,7 @@
    (list
     (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
+    (delete-other-windows)
     (emajjutsu-status/status id)))
 
 (defun emajjutsu--read-limit ()
@@ -54,6 +55,7 @@ Optionaly specify LIMIT."
   `(progn
      (progn ,@body)
      (cond ((equal major-mode 'emajjutsu/status-mode)
+	    (delete-other-windows)
 	    (emajjutsu-status/status "@"))
 	   ((equal major-mode 'emajjutsu/log-mode)
 	    (emajjutsu-log/refresh-buffer))
@@ -145,6 +147,28 @@ If the bookmark does not exist, create it."
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/rebase-source
       source-change target-change :destination))))
+
+(defun emajjutsu/log->status-at-point ()
+  "From a log view get the status of a particular change."
+  (interactive)
+  (split-window-sensibly)
+  (emajjutsu-status/status (emajjutsu-log/change-at-point)))
+
+(defun emajjutsu/push ()
+  "Push the current state of the repo to remote."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (emajjutsu-core/push)))
+
+(defun emajjustu/fetch ()
+  "Fetch from remote."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (emajjutsu-core/fetch)))
+
+
+
+
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

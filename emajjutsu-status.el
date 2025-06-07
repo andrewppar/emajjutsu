@@ -85,7 +85,8 @@
   "Quit the current buffer."
   (interactive)
   (emajjutsu-status--remove-buffer-data (current-buffer))
-  (kill-buffer))
+  (kill-buffer)
+  (delete-window))
 
 (define-derived-mode emajjutsu/status-mode fundamental-mode
   "View jujutsu repo status."
@@ -116,7 +117,6 @@
 
 (defun emajjutsu-status/status (change-id)
   "Create a buffer to display jujutsu status for CHANGE-ID."
-  (delete-other-windows)
   (let* ((buffer (switch-to-buffer (format "*emajjutsu status: %s*" change-id)))
 	 (change (emajjutsu-core/change-status change-id))
 	 (files (emajjutsu-core/change-files change-id))
