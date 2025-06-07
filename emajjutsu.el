@@ -160,7 +160,7 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (emajjutsu-core/push)))
 
-(defun emajjustu/fetch ()
+(defun emajjutsu/fetch ()
   "Fetch from remote."
   (interactive)
   (emajjutsu--with-buffer-refresh

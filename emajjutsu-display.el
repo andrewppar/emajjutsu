@@ -100,9 +100,8 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
   (cl-destructuring-bind
 	(&key change-id short-change description &allow-other-keys)
       change-spec
-    (format "%s%s: %s"
+    (format "%s: %s"
 	    (propertize short-change 'face emajjutsu-face/change-short)
-	    (substring change-id (length short-change))
 	    description)))
 
 (defun emajjutsu-display/change-selection (&optional prompt)
