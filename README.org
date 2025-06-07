@@ -1,0 +1,69 @@
+#+author: andrewppar
+#+title: emajjutsu
+#+date: <2025-06-07 Sat>
+
+* Emajjutsu
+
+This is a small set of things I've written up for myself to use jujutsu from within emacs.
+
+** Caveats
+1. This in no way is supposed to be feature full, rich, or anything like that.
+   - A corollary of this is that it does not compete with any thing else
+2. This is my own tool that I use myself. It's public for two reasons:
+   1. That makes it easier for me to manage it using =straight.el=
+   2. Maybe someone can use it or come along and do better
+3. This is bare bones:
+   - I haven't done anything with the color scheme - there's room to make it customizable though
+   - I haven't tried to do anything with diffs, diff resolution, etc. (see [[## Diffs]] below)
+4. Use at your own risk - like I said, this isn't even half baked so it might not work for everyone.
+
+* Quick start
+
+1. Clone with your favorite package manager. I use =straight= with =use-package= so my recipe is something like this:
+
+#+name: quick-start.use-package
+#+begin_src emacs-lisp
+(use-package emajjutsu
+    :ensure t
+    :defer t
+    :straight (emajjutsu :host github :repo "andrewppar/emajjutsu"))
+#+end_src
+
+2. Navigate to a file that's controlled by jujutsu.
+3. Call `emajjutsu/status` or `emajjutsu/log`.
+
+
+** bindings
+
+A lot of people handle keybindings very differently in emacs. So I try not to be opinionated about how bindings work in packages and leave that, as much as possible, to a configuration layer. Here's some psuedocode that I use for my bindings.
+#+name: quick-start.bindings.bindings
+#+begin_src emacs-lisp
+(bindings! emajjutsu/status-mode
+  (("." function emajjutsu-status/follow-at-point)
+   ("b" function emajjutsu/bookmark-set)
+   ("d" function emajjutsu/diff) ("e" function emajjutsu/edit)
+   ("g" "remote" ("f" function emajjutsu/fetch)
+	("p" function emajjutsu/push))
+   ("m" function emajjutsu/describe)
+   ("n" function emajjutsu/new)
+   ("q" function emajjutsu-status/quit)
+   (" " function emajjutsu/refresh-buffer)))
+
+(bindings! emajjutsu/log-mode
+  (("." function emajjutsu/log->status-at-point)
+   ("b" function emajjutsu/bookmark-set)
+   ("d" function emajjutsu/diff) ("e" function emajjutsu/edit)
+   ("g" "remote" ("f" function emajjutsu/fetch)
+	("p" function emajjutsu/push))
+   ("m" function emajjutsu/describe)
+   ("n" function emajjutsu/new)
+   ("q" function emajjutsu-log/quit)
+   (" " function emajjutsu/refresh-buffer)
+   ("r" "rebase" ("s" function emajjutsu/rebase-source))))
+#+end_src
+
+At the very least, this serves as an introduction to the main entry points for the package.
+
+** usage
+
+The two main entry points are =emajjutsu/status= and =emajjutsu/log=. Most other functions with an "emajjutsu/" prefix operate on buffers like that. Most of those functions are context aware and will "do the right thing" based on the buffer you're currently visiting.
