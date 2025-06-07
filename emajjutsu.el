@@ -166,9 +166,5 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (emajjutsu-core/fetch)))
 
-
-
-
-
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

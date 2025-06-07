@@ -2,11 +2,10 @@
 #+title: emajjutsu
 #+date: <2025-06-07 Sat>
 
-* Emajjutsu
 
 This is a small set of things I've written up for myself to use jujutsu from within emacs.
 
-** Caveats
+* caveats
 1. This in no way is supposed to be feature full, rich, or anything like that.
    - A corollary of this is that it does not compete with any thing else
 2. This is my own tool that I use myself. It's public for two reasons:
@@ -17,7 +16,7 @@ This is a small set of things I've written up for myself to use jujutsu from wit
    - I haven't tried to do anything with diffs, diff resolution, etc. (see [[## Diffs]] below)
 4. Use at your own risk - like I said, this isn't even half baked so it might not work for everyone.
 
-* Quick start
+* quick start
 
 1. Clone with your favorite package manager. I use =straight= with =use-package= so my recipe is something like this:
 
