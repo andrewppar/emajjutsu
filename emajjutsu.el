@@ -118,7 +118,6 @@ Only for status."
   "Move bookmark to the change at point.
 If the bookmark does not exist, create it."
   (interactive)
-
   (let* ((bookmarks (mapcar
 		     (lambda (bookmark) (plist-get bookmark :name))
 		     (emajjutsu-core/bookmark-list)))
@@ -129,6 +128,13 @@ If the bookmark does not exist, create it."
      (if (member bookmark bookmarks)
 	 (emajjutsu-core/bookmark-set bookmark change-id)
        (emajjutsu-core/bookmark-create bookmark change-id)))))
+
+(defun emajjutsu/refresh-buffer ()
+  "Refresh the data on the curren buffer."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (message "refreshing...")))
+
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
