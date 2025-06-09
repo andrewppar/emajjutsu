@@ -83,10 +83,16 @@ If LIMIT is NIL it is treated as though there is none."
 		 (line-beginning-position) (line-end-position))
 		(replace-regexp-in-string (regexp-quote "│") "")
 		string-trim)))
+    ;; todo: this is configuration specific - so we may have to generalize
+    ;; or find some way of reading the config... or something else
     (when (or (string-prefix-p "@" line)
 	      (string-prefix-p "◆" line)
+	      (string-prefix-p "×" line)
 	      (string-prefix-p "○" line))
       (cadr (split-string line " " t " ")))))
+
+;; add squash and split here - the files need to be obtained by a
+;; selection box or something like it
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here

@@ -20,16 +20,17 @@
 
 ;;;###autoload
 (defun emajjutsu/status (&optional change-id)
-  "View the status of CHANGE-ID."
+  "View the status of CHANGE-ID.
+If CHANGE-ID is not provided, default to '@'."
   (interactive
    (list
     (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
-    (delete-other-windows)
     (emajjutsu-status/status id)))
 
 (defun emajjutsu--read-limit ()
-  "Read a limit from the user."
+  "Prompt the user to input a limit and return it as a number.
+If the input is invalid or zero, return nil."
   (let* ((limit (string-to-number (read-string "limit: "))))
     (unless (= limit 0)
       limit)))
@@ -37,13 +38,14 @@
 ;;;###autoload
 (defun emajjutsu/log (limit)
   "View the log for @.
-Optionaly specify LIMIT."
+Optionally specify LIMIT."
   (interactive
    (list (emajjutsu--read-limit)))
   (emajjutsu-log/log limit))
 
 (defun emajjutsu--change-id-at-point ()
-  "Get the change id at point if it exists."
+  "Get the change id at point if it exists.
+Return nil if no change ID is found."
   (cond ((equal major-mode 'emajjutsu/status-mode)
 	 (emajjutsu-status/change-at-point))
 	((equal major-mode 'emajjutsu/log-mode)
@@ -55,8 +57,7 @@ Optionaly specify LIMIT."
   `(progn
      (progn ,@body)
      (cond ((equal major-mode 'emajjutsu/status-mode)
-	    (delete-other-windows)
-	    (emajjutsu-status/status "@"))
+	    (emajjutsu-status/refresh-buffer))
 	   ((equal major-mode 'emajjutsu/log-mode)
 	    (emajjutsu-log/refresh-buffer))
 	   (t nil))))
@@ -112,8 +113,8 @@ Only for status."
       (lambda (bookmark) (plist-get bookmark :name))
       (emajjutsu-core/bookmark-list)))))
   (emajjutsu--with-buffer-refresh
-  (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
-    (emajjutsu-core/bookmark-delete bookmark))))
+   (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
+     (emajjutsu-core/bookmark-delete bookmark))))
 
 ;;;###autoload
 (defun emajjutsu/bookmark-set ()
@@ -132,7 +133,7 @@ If the bookmark does not exist, create it."
        (emajjutsu-core/bookmark-create bookmark change-id)))))
 
 (defun emajjutsu/refresh-buffer ()
-  "Refresh the data on the curren buffer."
+  "Refresh the data on the current buffer."
   (interactive)
   (emajjutsu--with-buffer-refresh
    (message "refreshing...")))
@@ -148,7 +149,7 @@ If the bookmark does not exist, create it."
 			   (string-join
 			    (list
 			     "Rebase Options:"
-			     "'a' ' select change to insert after"
+			     "'a' - select change to insert after"
 			     "'b' - select change to insert before"
 			     "'n' or 'q' - abort rebase"
 			     (format "otherwise - rebase from %s onto %s"
@@ -160,9 +161,11 @@ If the bookmark does not exist, create it."
 		     (?q :quit)
 		     (?n :quit)
 		     (_ :destination))))
+
     (emajjutsu--with-buffer-refresh
-     (emajjutsu-core/rebase-source
-      source-change target-change location))))
+     (unless (equal location :quit)
+       (emajjutsu-core/rebase-source
+	source-change target-change location)))))
 
 (defun emajjutsu/log->status-at-point ()
   "From a log view get the status of a particular change."
@@ -181,6 +184,26 @@ If the bookmark does not exist, create it."
   (interactive)
   (emajjutsu--with-buffer-refresh
    (emajjutsu-core/fetch)))
+
+(defun emajjutsu/split ()
+  "Perform a split.
+The marked files in the buffer are moved to a new parallel commit.
+A description is prompted from the user."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (emajjutsu-status/split-marks
+    (read-string "describe new change: "))))
+
+(defun emajjutsu/squash ()
+  "Peform a squash.
+The marked files in the buffer are squashed into a target change."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (let* ((target-change-id (emajjutsu-display/change-selection
+			     "squash into change: ")))
+     (emajjutsu-status/squash-marks target-change-id))))
+
+
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

@@ -20,9 +20,13 @@
 (defconst emajjutsu/jj
   (string-trim (shell-command-to-string "which jj")))
 
+(defun emajjutsu-core/root ()
+  "The root of the repo at `default-directory`."
+  (string-trim (shell-command-to-string "jj root")))
+
 (defun emajjutsu-core--execute-internal (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
-  (let ((default-directory (string-trim (shell-command-to-string "jj root"))))
+  (let ((default-directory (emajjutsu-core/root)))
     (when subcommand (push subcommand args))
     (push command args)
     (push emajjutsu/jj args)
@@ -201,11 +205,39 @@ TARGET-COMMIT."
 
 (defun emajjutsu-core/fetch ()
   "Fetch from remote."
-  (emajjutsu-core--execute-internal "git" "fetch"))
+  (message
+   (emajjutsu-core--execute-internal "git" "fetch")))
 
 (defun emajjutsu-core/push ()
   "Push current state to remote."
-  (emajjutsu-core--execute-internal "git" "push" "--allow-new"))
+  (message
+   (emajjutsu-core--execute-internal "git" "push" "--allow-new")))
+
+(defun emajjutsu-core/squash (files source-change-id target-change-id)
+  "Squash the FILES in SOURCE-CHANGE-ID into TARGET-CHANGE-ID."
+  (let ((args (seq-concatenate
+	       'list
+	       files
+	       (list "--from" source-change-id "--into" target-change-id "-u"))))
+    (apply #'emajjutsu-core--execute-internal "squash" args)))
+
+(defun emajjutsu-core/split (change-id files description)
+  "Split CHANGE-ID into two one with FILES and one without.
+The new change has DESCRIPTION."
+  ;; all this is necessary because `jj split` tries to use an editor
+  ;; to get a description.
+  (let ((source-id (if (equal (string-trim change-id) "@")
+		       (plist-get (emajjutsu-core/change-status "@") :change-id)
+		     change-id)))
+    (emajjutsu-core/new source-id)
+    ;; current change is now the new one
+    (let ((new-change-id (plist-get (emajjutsu-core/change-status "@") :change-id)))
+      (emajjutsu-core/describe new-change-id description)
+      (emajjutsu-core/edit source-id)
+      (emajjutsu-core/squash files source-id new-change-id))))
+
+
+
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

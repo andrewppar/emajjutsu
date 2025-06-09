@@ -27,7 +27,7 @@
     "Working copy changes: "
     (mapcar
      (lambda (file-spec)
-       (cl-destructuring-bind (&key status file &allow-other-keys)
+       (cl-destructuring-bind (&key status file marked &allow-other-keys)
 	   file-spec
 	 (let ((status-string (cl-case status
 				(:added "A")
@@ -35,7 +35,8 @@
 				(:copied "C")
 				(:deleted "D")
 				(:renamed "R"))))
-	   (propertize (format "%s %s" status-string file)
+	   (propertize (format "%s%s %s"
+			       status-string  (if marked "*" " ") file)
 		       'face
 		       (cl-case status
 			 (:added emajjutsu-face/added-file)
@@ -74,12 +75,22 @@
   (emajjutsu-status--remove-buffer-data buffer)
   (push (cons buffer data) emajjutsu-status--buffer->data))
 
-(defun emajjutsu-status--buffer->data--change-id (buffer)
+
+(defun emajjutsu-status--buffer->data-mark-file (buffer file mark?)
+  "Add a :marked flag of MARK? to the buffer data for BUFFER and FILE."
+  ;; I hate that this is not using more functional operations
+  (let* ((current-data (alist-get buffer emajjutsu-status--buffer->data)))
+    (dolist (file-data (plist-get current-data :files))
+      (when (equal (plist-get file-data :file) file)
+	(plist-put file-data :marked mark?)))))
+
+(defun emajjutsu-status--buffer->data-change-id (buffer)
   "Get the change-id for BUFFER in EMAJJUTSU-STATUS--BUFFER->DATA."
   (thread-first
     (alist-get buffer emajjutsu-status--buffer->data)
     (plist-get :change)
     (plist-get :change-id)))
+
 
 (defun emajjutsu-status/quit ()
   "Quit the current buffer."
@@ -148,18 +159,21 @@
 		    (split-string " " t " ")
 		    car))))
 
+(defun emajjutsu-status--filename-at-point ()
+  "Get the filename at point."
+  (let ((line (string-trim
+	       (buffer-substring-no-properties
+		(line-beginning-position) (line-end-position)))))
+    (when (seq-some
+	   (lambda (prefix) (string-prefix-p prefix line))
+	   ;; todo: add these to some defconst
+	   (list "A " "M " "C " "D " "R " "A*" "M*" "C*" "D*" "R*"))
+      (string-join (cdr (string-split line " " t " ")) " "))))
+
 (defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
-  (let* ((line (string-trim
-		(buffer-substring-no-properties
-		 (line-beginning-position) (line-end-position))))
-	 (file (if (seq-some
-		    (lambda (prefix) (string-prefix-p prefix line))
-		    ;; add these to some defconst
-		    (list "A " "M " "C " "D " "R "))
-		   (string-join (cdr (string-split line " " t " ")) " ")
-		 (read-file-name "Select a file to diff: ")))
-	 (change-id (emajjutsu-status--buffer->data--change-id
+  (let* ((file (emajjutsu-status--filename-at-point))
+	 (change-id (emajjutsu-status--buffer->data-change-id
 		     (current-buffer))))
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
     (erase-buffer)
@@ -171,13 +185,83 @@
   (interactive)
   (thread-last
     (current-buffer)
-    emajjutsu-status--buffer->data--change-id
+    emajjutsu-status--buffer->data-change-id
     emajjutsu-status/status))
 
-(defun emajjutsu-status/follow-at-point ()
+(defun emajjutsu-status/follow-change-at-point ()
   "Call `emajjutsu-status/status` on the change-id for the line at point."
   (interactive)
   (emajjutsu-status/status (emajjutsu-status/change-at-point)))
+
+(defun emajjutsu-status/visit-file-at-point ()
+  "When there is a file at point, visit that file."
+  (interactive)
+  (when-let ((file (emajjutsu-status--filename-at-point)))
+    (find-file (string-join (list (emajjutsu-core/root) file) "/"))))
+
+(defun emajjutsu-status/action-at-point ()
+  "Take action that is relevant at point."
+  (interactive)
+  (cond ((emajjutsu-status--filename-at-point)
+	 (emajjutsu-status/visit-file-at-point))
+	((emajjutsu-status/change-at-point)
+	 (emajjutsu-status/follow-change-at-point))))
+
+(defun emajjutsu-status--toggle-mark ()
+  "Get line at point and toggle mark."
+  (let ((line (string-trim
+	       (buffer-substring
+		(line-beginning-position) (line-end-position)))))
+    (cl-destructuring-bind (status file)
+	(string-split line " " t " ")
+      (let* ((mark? (string-suffix-p "*" status))
+	     (new-status (if mark?
+			     (string-replace "*" " " status)
+			   (format "%s*" status)))
+	     (line-start (line-beginning-position)))
+	(emajjutsu-status--buffer->data-mark-file
+	 (current-buffer) file (not mark?))
+	(save-excursion
+	  (goto-char line-start)
+	  (delete-region line-start (+ line-start 2))
+	  (insert new-status))))))
+
+(defun emajjutsu-status/toggle-mark ()
+  "Toggle the mark on the file at point."
+  (interactive)
+  (when (emajjutsu-status--filename-at-point)
+    (emajjutsu-status--with-buffer
+     (emajjutsu-status--toggle-mark))))
+
+
+
+(defun emajjutsu-status--buffer->data-marked-files (buffer)
+  "Get filenames that are marked in BUFFER."
+  (seq-reduce
+   (lambda (acc filespec)
+     (cl-destructuring-bind (&key marked file &allow-other-keys)
+	 filespec
+       (if marked (cons file acc) acc)))
+   (plist-get (alist-get buffer emajjutsu-status--buffer->data) :files)
+   '()))
+
+(defun emajjutsu-status/split-marks (description)
+  "Perform emajjutsu split on the marked files.
+Splits are parallel by default.
+DESCRIPTION is applied to the change that gets the marked files."
+  (interactive)
+  (let* ((buffer (current-buffer))
+	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
+    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+      (emajjutsu-core/split change-id files description))))
+
+(defun emajjutsu-status/squash-marks (target-change-id)
+  "Squash marked files from the current change into TARGET-CHANGE-ID."
+  (interactive)
+  (let* ((buffer (current-buffer))
+	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
+    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+      (emajjutsu-core/squash files change-id target-change-id))))
 
 (provide 'emajjutsu-status)
 ;;; emajjutsu-status.el ends here
