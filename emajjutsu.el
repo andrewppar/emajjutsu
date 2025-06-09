@@ -140,13 +140,29 @@ If the bookmark does not exist, create it."
 (defun emajjutsu/rebase-source ()
   "Rebase the change at point onto a selected change as SOURCE."
   (interactive)
-  (let ((source-change (or (emajjutsu--change-id-at-point)
-			   (emajjutsu-display/change-selection)))
-	(target-change (emajjutsu-display/change-selection
-			"rebase destination: ")))
+  (let* ((source-change (or (emajjutsu--change-id-at-point)
+			    (emajjutsu-display/change-selection)))
+	 (target-change (emajjutsu-display/change-selection
+			 "rebase destination: "))
+	 (location (pcase (read-char
+			   (string-join
+			    (list
+			     "Rebase Options:"
+			     "'a' ' select change to insert after"
+			     "'b' - select change to insert before"
+			     "'n' or 'q' - abort rebase"
+			     (format "otherwise - rebase from %s onto %s"
+				     source-change target-change)
+			     "")
+			    "\n"))
+		     (?b :before)
+		     (?a :after)
+		     (?q :quit)
+		     (?n :quit)
+		     (_ :destination))))
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/rebase-source
-      source-change target-change :destination))))
+      source-change target-change location))))
 
 (defun emajjutsu/log->status-at-point ()
   "From a log view get the status of a particular change."
