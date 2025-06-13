@@ -15,6 +15,7 @@
 
 ;;; Code:
 (require 'emajjutsu-template)
+(require' emajjutsu-file)
 (require 'subr-x)
 
 (defconst emajjutsu/jj
@@ -34,18 +35,6 @@
       (if (string-prefix-p "Error:" response)
 	  (error response)
 	response))))
-
-(defun emajjutsu-core--parse-file-line (line)
-  "Structured output of LINE representing a file."
-  (let ((mod-status (cond
-		      ((string-prefix-p "A" line) :added)
-		      ((string-prefix-p "M" line) :modified)
-		      ((string-prefix-p "C" line) :copied)
-		      ((string-prefix-p "D" line) :deleted)
-		      ((string-prefix-p "R" line) :renamed)
-		      (t nil))))
-    (list :status mod-status
-	  :file (string-trim (substring line 1)))))
 
 (defconst emajjutsu-core--commit-template
   (emajjutsu-template/build
@@ -100,7 +89,7 @@ This includes: change and commit ids and description"
 (defun emajjutsu-core/change-files (commit-or-change)
   "Get details about the commit with COMMIT-OR-CHANGE id or unique prefix."
   (mapcar
-   #'emajjutsu-core--parse-file-line
+   #'emajjutsu-file/parse-string
    (split-string
     (emajjutsu-core--execute-internal
      "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
@@ -168,7 +157,7 @@ When FILEPATHS is NIL all changes are returned."
   (let* ((base-template (emajjutsu-template/build
 			 (list :name (list :expression "name.escape_json()"))))
 	 (response (emajjutsu-core--execute-internal
-		    "bookmark" "list" "--template"
+		    "bookmark" "list" "--quiet" "--template"
 		    (format "%s ++ \"|||\"'" (substring base-template 0 -1)))))
     (unless (string-empty-p response)
       (let ((comma-separated (replace-regexp-in-string

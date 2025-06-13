@@ -185,14 +185,17 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (emajjutsu-core/fetch)))
 
-(defun emajjutsu/split ()
-  "Perform a split.
+(defun emajjutsu/split (description)
+  "Perform a split with DESCRIPTION on new change.
 The marked files in the buffer are moved to a new parallel commit.
 A description is prompted from the user."
-  (interactive)
+  (interactive (list (read-string "describe new change: ")))
   (emajjutsu--with-buffer-refresh
-   (emajjutsu-status/split-marks
-    (read-string "describe new change: "))))
+   (cond ((equal major-mode 'emajjutsu/status-mode)
+	  (emajjutsu-status/split-marks description))
+	 ((equal major-mode 'emajjutsu/log-mode)
+	  (emajjutsu-log/split description))
+	 (t nil))))
 
 (defun emajjutsu/squash ()
   "Peform a squash.
@@ -201,7 +204,11 @@ The marked files in the buffer are squashed into a target change."
   (emajjutsu--with-buffer-refresh
    (let* ((target-change-id (emajjutsu-display/change-selection
 			     "squash into change: ")))
-     (emajjutsu-status/squash-marks target-change-id))))
+     (cond ((equal major-mode 'emajjutsu/status-mode)
+	  (emajjutsu-status/squash-marks target-change-id))
+	 ((equal major-mode 'emajjutsu/log-mode)
+	  (emajjutsu-log/squash target-change-id))
+	 (t nil)))))
 
 
 

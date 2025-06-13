@@ -18,6 +18,7 @@
 (require 'emajjutsu-core)
 (require 'emajjutsu-face)
 (require 'emajjutsu-display)
+(require 'emajjutsu-file)
 (require 'cl-lib)
 
 (defun emajjutsu-status--files (file-specs)
@@ -25,26 +26,7 @@
   (string-join
    (cons
     "Working copy changes: "
-    (mapcar
-     (lambda (file-spec)
-       (cl-destructuring-bind (&key status file marked &allow-other-keys)
-	   file-spec
-	 (let ((status-string (cl-case status
-				(:added "A")
-				(:modified "M")
-				(:copied "C")
-				(:deleted "D")
-				(:renamed "R"))))
-	   (propertize (format "%s%s %s"
-			       status-string  (if marked "*" " ") file)
-		       'face
-		       (cl-case status
-			 (:added emajjutsu-face/added-file)
-			 (:copied emajjutsu-face/copied-file)
-			 (:modified emajjutsu-face/modified-file)
-			 (:deleted emajjutsu-face/deleted-file)
-			 (:renamed emajjutsu-face/modified-file))))))
-     file-specs))
+    (mapcar #'emajjutsu-display/show-file-spec file-specs))
    "\n"))
 
 (defun emajjutsu-status--parents (parent-specs)
@@ -161,14 +143,11 @@
 
 (defun emajjutsu-status--filename-at-point ()
   "Get the filename at point."
-  (let ((line (string-trim
-	       (buffer-substring-no-properties
-		(line-beginning-position) (line-end-position)))))
-    (when (seq-some
-	   (lambda (prefix) (string-prefix-p prefix line))
-	   ;; todo: add these to some defconst
-	   (list "A " "M " "C " "D " "R " "A*" "M*" "C*" "D*" "R*"))
-      (string-join (cdr (string-split line " " t " ")) " "))))
+  (thread-first
+    (buffer-substring-no-properties
+     (line-beginning-position) (line-end-position))
+    emajjutsu-file/parse-string
+    (plist-get :file)))
 
 (defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
@@ -232,8 +211,6 @@
   (when (emajjutsu-status--filename-at-point)
     (emajjutsu-status--with-buffer
      (emajjutsu-status--toggle-mark))))
-
-
 
 (defun emajjutsu-status--buffer->data-marked-files (buffer)
   "Get filenames that are marked in BUFFER."

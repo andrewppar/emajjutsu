@@ -17,6 +17,7 @@
 (require 'subr-x)
 (require 'emajjutsu-display)
 (require 'emajjutsu-core)
+(require 'emajjutsu-file)
 
 (define-derived-mode emajjutsu/log-mode fundamental-mode
   "View jujutsu repo status."
@@ -30,7 +31,6 @@
 	(progn
 	  (switch-to-buffer "*emajjutsu log*")
 	  (let ((inhibit-read-only t))
-	    (erase-buffer)
 	    (emajjutsu/log-mode)
 	    (progn ,@body)))
      (read-only-mode 1)))
@@ -44,6 +44,7 @@ If LIMIT is NIL it is treated as though there is none."
   (interactive)
   (setq emajjutsu-log--current-limit limit)
   (emajjutsu-log--with-buffer
+   (erase-buffer)
    (insert
     (string-join
      (list
@@ -76,6 +77,13 @@ If LIMIT is NIL it is treated as though there is none."
   "Refresh the log buffer."
   (emajjutsu-log/log emajjutsu-log--current-limit))
 
+(defun emajjutsu-log--change-line-p (line)
+  "A predicate that indicates that LINE is for a change."
+  (or (string-prefix-p "@" line)
+      (string-prefix-p "◆" line)
+      (string-prefix-p "×" line)
+      (string-prefix-p "○" line)))
+
 (defun emajjutsu-log/change-at-point ()
   "Get the change at point if it exists."
   (let ((line (thread-last
@@ -85,14 +93,154 @@ If LIMIT is NIL it is treated as though there is none."
 		string-trim)))
     ;; todo: this is configuration specific - so we may have to generalize
     ;; or find some way of reading the config... or something else
-    (when (or (string-prefix-p "@" line)
-	      (string-prefix-p "◆" line)
-	      (string-prefix-p "×" line)
-	      (string-prefix-p "○" line))
+    (when (emajjutsu-log--change-line-p line)
       (cadr (split-string line " " t " ")))))
 
-;; add squash and split here - the files need to be obtained by a
-;; selection box or something like it
+(defun emajjutsu-log--nearest-change (direction)
+  "Scroll in DIRECTION to find the nearest change."
+  (let ((line-increment (pcase direction (:up -1) (:down 1)))
+	(change-id nil)
+	(last-line-return 0))
+    (save-excursion
+      (while (and (not change-id) (= last-line-return 0))
+	(setq change-id (emajjutsu-log/change-at-point)
+	      last-line-return (forward-line line-increment))))
+    change-id))
+
+(defun emajjutsu-log--goto-change-id (change-id)
+  "Go to the line for CHANGE-ID."
+  (goto-char (point-min))
+  ;; we could probably make a map of change-ids to
+  ;; positions and do fuzzy search or something like that
+  ;; over the list...
+  (re-search-forward (regexp-quote change-id)))
+
+(defun emajjutsu-log--show-files ()
+  "Show the files for the change at point."
+  (when-let ((change-id (emajjutsu-log--nearest-change :up)))
+    (emajjutsu-log--goto-change-id change-id)
+    (end-of-line)
+    (let* ((files (cons (format "Files: %s" change-id)
+			(mapcar #'emajjutsu-display/show-file-spec
+				(emajjutsu-core/change-files change-id))))
+	   (max-file (apply #'max (mapcar #'length files)))
+	   (top-divider (string-join (cons "╭" (nconc (make-list (+ 2 max-file) "─") (list "╮")))))
+	   (bottom-divider (string-join (cons "╰" (nconc (make-list (+ 2 max-file) "─") (list "╯")))))
+	   (table-string (string-join
+			  (mapcar
+			   (lambda (line)
+			     (let ((padding (make-string (- max-file (length line)) ? )))
+			       (format "│ %s%s │" line padding)))
+			   files)
+			  "\n")))
+      (emajjutsu-log--with-buffer
+       (insert "\n")
+       (insert (string-join (list top-divider table-string bottom-divider) "\n"))))))
+
+(defun emajjutsu-log--displayed-files ()
+  "Get the displayed files for the change at point."
+  (let ((change-id (emajjutsu-log--nearest-change :up))
+	(files '()))
+    (save-excursion
+      (emajjutsu-log--goto-change-id change-id)
+      (forward-line 1)
+      (let ((line (buffer-substring-no-properties
+		   (line-beginning-position) (line-end-position))))
+	(when (emajjutsu-file/table-start-p line)
+	  (while (not (emajjutsu-file/table-end-p line))
+	    (when (and (not (string-prefix-p "│ Files:" line))
+		       (not (emajjutsu-file/table-start-p line)))
+	      (push (emajjutsu-file/parse-string line) files))
+	    (forward-line 1)
+	    (setq line (buffer-substring-no-properties
+			(line-beginning-position) (line-end-position)))))))
+    files))
+
+(defun emajjutsu-log--hide-files ()
+  "Hide the files for the change at point."
+  (let ((change-id (emajjutsu-log--nearest-change :up)))
+    (save-excursion
+      (emajjutsu-log--with-buffer
+       (emajjutsu-log--goto-change-id change-id)
+       (forward-line 1)
+       (let ((line (buffer-substring-no-properties
+		    (line-beginning-position) (line-end-position))))
+	 (when (emajjutsu-file/table-start-p line)
+	   (while (not (emajjutsu-file/table-end-p line))
+	     (delete-line)
+	     (setq line (buffer-substring-no-properties
+			 (line-beginning-position) (line-end-position))))
+	   (delete-line)))))))
+
+(defun emajjutsu-log/toggle-change-files ()
+  "Hide or show the files for the change at point."
+  (interactive)
+  (let ((change-id (emajjutsu-log--nearest-change :up)))
+    (save-excursion
+      (emajjutsu-log--goto-change-id change-id)
+      (forward-line 1)
+      (let ((line (buffer-substring-no-properties
+		   (line-beginning-position) (line-end-position))))
+	(if (emajjutsu-file/table-start-p line)
+	    (emajjutsu-log--hide-files)
+	  (emajjutsu-log--show-files))))))
+
+(defun emajjutsu-log/toggle-file-mark ()
+  "Toggle the mark at the file at point, if there is one."
+  (interactive)
+  (let ((line (buffer-substring-no-properties
+	       (line-beginning-position) (line-end-position))))
+    (when (and (string-prefix-p "│" line)
+	       (string-suffix-p "│" line))
+      (let* ((without-suffix (substring line 0 -1))
+	     (pad-size (- (length without-suffix)
+			  (length (string-trim without-suffix))))
+	     (padding (make-string pad-size ? )))
+	(emajjutsu-log--with-buffer
+	 (delete-line)
+	 (insert
+	  (format "│ %s%s│\n"
+		  (emajjutsu-file/toggle-mark line)
+		  padding)))))))
+
+(defun emajjutsu-log--files-for-change-at-point ()
+  "Get the files (if they are showing) for the nearest change above point."
+  (let ((change-id (emajjutsu-log--nearest-change :up))
+	(files ()))
+    (save-excursion
+      (emajjutsu-log--goto-change-id change-id)
+      (forward-line 1)
+      (let ((line (buffer-substring-no-properties
+		   (line-beginning-position) (line-end-position))))
+	(when (emajjutsu-file/table-start-p line)
+	  (while (not (emajjutsu-file/table-end-p line))
+	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
+	      (push file-spec files))
+	    (forward-line 1)
+	    (setq line (buffer-substring-no-properties
+			(line-beginning-position) (line-end-position)))))))
+    files))
+
+(defun emajjutsu-log/split (description)
+  "Split the change at point with DESCRIPTION on the new change.
+The files split are the ones that are marked for that change."
+  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+	     (files (thread-last
+		      (emajjutsu-log--files-for-change-at-point)
+		      (seq-filter (lambda (spec) (plist-get spec :marked)))
+		      (mapcar (lambda (spec) (plist-get spec :file))))))
+    (emajjutsu-log--with-buffer
+     (emajjutsu-core/split change-id files description))))
+
+(defun emajjutsu-log/squash (target-change-id)
+  "Squash the marked files of the current change to TARGET-CHANGE-ID."
+  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+	     (files (thread-last
+		      (emajjutsu-log--files-for-change-at-point)
+		      (seq-filter (lambda (spec) (plist-get spec :marked)))
+		      (mapcar (lambda (spec) (plist-get spec :file))))))
+    (emajjutsu-log--with-buffer
+     (emajjutsu-core/squash files change-id target-change-id))))
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
