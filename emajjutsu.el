@@ -86,17 +86,24 @@ Otherwise prompt for a parent."
 (defun emajjutsu/describe ()
   "Describe the change at point, or specify the change."
   (interactive)
-  (let ((change-id (or (emajjutsu--change-id-at-point)
-		       (emajjutsu-display/change-selection)))
-	(description (read-string "Describe change: ")))
+  (let* ((change-id (or (emajjutsu--change-id-at-point)
+			(emajjutsu-display/change-selection)))
+	 (existing-description (plist-get
+				(emajjutsu-core/change-status change-id)
+				:description))
+	 (description (read-string "Describe change: " existing-description)))
     (emajjutsu--with-buffer-refresh
      (emajjutsu-core/describe change-id description))))
 
 (defun emajjutsu/diff ()
-  "Get the diff of the change at point.
-Only for status."
+  "Get the diff of the change at point."
   (interactive)
-  (emajjutsu-status/diff))
+  (emajjutsu--with-buffer-refresh
+   (cond ((equal major-mode 'emajjutsu/status-mode)
+	  (emajjutsu-status/diff))
+	 ((equal major-mode 'emajjutsu/log-mode)
+	  (emajjutsu-log/diff))
+	 (t nil))))
 
 
 (defun emajjutsu/bookmarks ()

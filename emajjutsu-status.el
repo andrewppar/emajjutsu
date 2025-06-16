@@ -141,17 +141,11 @@
 		    (split-string " " t " ")
 		    car))))
 
-(defun emajjutsu-status--filename-at-point ()
-  "Get the filename at point."
-  (thread-first
-    (buffer-substring-no-properties
-     (line-beginning-position) (line-end-position))
-    emajjutsu-file/parse-string
-    (plist-get :file)))
-
 (defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
-  (let* ((file (emajjutsu-status--filename-at-point))
+  (let* ((line (buffer-substring-no-properties
+		(line-beginning-position) (line-end-position)))
+	 (file (plist-get (emajjutsu-file/parse-string line) :file))
 	 (change-id (emajjutsu-status--buffer->data-change-id
 		     (current-buffer))))
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))

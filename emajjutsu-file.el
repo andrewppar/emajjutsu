@@ -79,5 +79,16 @@ FILE-SPEC is expected to have keys: status, file, and marked."
     (emajjutsu-file/show-spec
      (plist-put spec :marked (not (plist-get spec :marked))))))
 
+
+(defun emajjutsu-status/diff (change-id)
+  "Show a diff for CHANGE-ID with the file at point."
+  (let* ((line (buffer-substring-no-properties
+		(line-beginning-position) (line-end-position)))
+	 (file (plist-get (emajjutsu-file/parse-string line) :file)))
+    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
+    (erase-buffer)
+    (insert (emajjutsu-core/diff change-id (list file)))
+    (diff-mode)))
+
 (provide 'emajjutsu-file)
 ;;; emajjutsu-file.el ends here

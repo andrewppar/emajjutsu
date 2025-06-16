@@ -242,5 +242,16 @@ The files split are the ones that are marked for that change."
     (emajjutsu-log--with-buffer
      (emajjutsu-core/squash files change-id target-change-id))))
 
+(defun emajjutsu-log/diff ()
+  "Show a diff of the file at point."
+  (let* ((line (buffer-substring-no-properties
+		(line-beginning-position) (line-end-position)))
+	 (file (plist-get (emajjutsu-file/parse-string line) :file))
+	 (change-id (emajjutsu-log--nearest-change :up)))
+    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
+    (erase-buffer)
+    (insert (emajjutsu-core/diff change-id (list file)))
+    (diff-mode)))
+
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
