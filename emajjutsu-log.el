@@ -121,7 +121,7 @@ If LIMIT is NIL it is treated as though there is none."
     (emajjutsu-log--goto-change-id change-id)
     (end-of-line)
     (let* ((files (cons (format "Files: %s" change-id)
-			(mapcar #'emajjutsu-display/show-file-spec
+			(mapcar #'emajjutsu-file/show-spec
 				(emajjutsu-core/change-files change-id))))
 	   (max-file (apply #'max (mapcar #'length files)))
 	   (top-divider (string-join (cons "╭" (nconc (make-list (+ 2 max-file) "─") (list "╮")))))
