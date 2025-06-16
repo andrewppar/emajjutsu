@@ -14,6 +14,7 @@
 ;; Execute jj commands from within Emacs
 
 ;;; Code:
+(require 'cl-lib)
 (require 'emajjutsu-display)
 (require 'emajjutsu-status)
 (require 'emajjutsu-log)
@@ -217,7 +218,18 @@ The marked files in the buffer are squashed into a target change."
 	  (emajjutsu-log/squash target-change-id))
 	 (t nil)))))
 
-
+(defun emajjutsu/abandon ()
+  "Abandon a change."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (let* ((change-id (emajjutsu-display/change-selection
+		      "select a change to abandon: "
+		      (emajjutsu--change-id-at-point)))
+	  (description (plist-get
+			(emajjutsu-core/change-status change-id)
+			:description)))
+     (when (y-or-n-p (format "Really abandon %s: %s?" change-id description))
+       (emajjutsu-core/abandon change-id)))))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

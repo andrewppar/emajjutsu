@@ -25,7 +25,7 @@
   "The root of the repo at `default-directory`."
   (string-trim (shell-command-to-string "jj root")))
 
-(defun emajjutsu-core--execute-internal (command subcommand &rest args)
+(defun emajjutsu-core--execute (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
   (let ((default-directory (emajjutsu-core/root)))
     (when subcommand (push subcommand args))
@@ -62,7 +62,7 @@ This includes: change and commit ids and description"
     "" "\\n"
     (string-replace
      "\n" "\\n"
-     (emajjutsu-core--execute-internal
+     (emajjutsu-core--execute
       "log" nil "--no-graph"
       "-r" commit-or-change
       "-T" emajjutsu-core--commit-template)))
@@ -78,7 +78,7 @@ This includes: change and commit ids and description"
 	 (cons (string-join (cdr (split-string line " ")) " ") acc)
        acc))
    (split-string
-    (emajjutsu-core--execute-internal
+    (emajjutsu-core--execute
      "log" nil
      "--no-graph" "--types"
      "--template" "' '"
@@ -91,13 +91,13 @@ This includes: change and commit ids and description"
   (mapcar
    #'emajjutsu-file/parse-string
    (split-string
-    (emajjutsu-core--execute-internal
+    (emajjutsu-core--execute
      "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
     "\n" t " ")))
 
 (defun emajjutsu-core/edit (commit-or-change)
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
-  (emajjutsu-core--execute-internal "edit" "-r" commit-or-change))
+  (emajjutsu-core--execute "edit" "-r" commit-or-change))
 
 (defun emajjutsu-core/log-tree (limit)
   "Get the jj string representing a log tree.
@@ -105,11 +105,11 @@ This includes: change and commit ids and description"
 That is all of the lines connecting nodes, with only change ids at nodes.
 LIMIT specifies the number of nodes to fetch."
   (if limit
-      (emajjutsu-core--execute-internal
+      (emajjutsu-core--execute
        "log" nil
        "--limit" (format "%s" limit)
        "--template" "'change_id.short() ++ \"\n\n\"'")
-    (emajjutsu-core--execute-internal
+    (emajjutsu-core--execute
      "log" nil "--template" "'change_id.short() ++ \"\n\n\"'")))
 
 (defun emajjutsu-core/log-changes (limit)
@@ -118,10 +118,10 @@ LIMIT specifies the number of nodes to fetch."
 			   (substring emajjutsu-core--commit-template
 				      0 (- (length emajjutsu-core--commit-template) 1))))
 	 (response (if limit
-		       (emajjutsu-core--execute-internal
+		       (emajjutsu-core--execute
 			"log" nil "--no-graph"
 			"--limit" (format "%s" limit)  "--template" template)
-		     (emajjutsu-core--execute-internal
+		     (emajjutsu-core--execute
 		      "log" nil "--no-graph" "--template" template)))
 	 (comma-separated-response (replace-regexp-in-string
 				    (regexp-quote "|||") "," response))
@@ -140,23 +140,23 @@ When FILEPATHS is NIL all changes are returned."
     (dolist (filepath filepaths)
       (push filepath args))
     (push "diff" args)
-    (apply #'emajjutsu-core--execute-internal args)))
+    (apply #'emajjutsu-core--execute args)))
 
 (defun emajjutsu-core/describe (commit-or-change-id description)
   "Set the description for COMMIT-OR-CHANGE-ID to DESCRIPTION."
-  (emajjutsu-core--execute-internal
+  (emajjutsu-core--execute
    "describe" nil "-r" commit-or-change-id "-m" (format "\"%s\"" description)))
 
 (defun emajjutsu-core/new
     (source-commit-or-change-id)
   "Create a new change after SOURCE-COMMIT-OR-CHANGE-ID."
-  (emajjutsu-core--execute-internal "new" source-commit-or-change-id))
+  (emajjutsu-core--execute "new" source-commit-or-change-id))
 
 (defun emajjutsu-core/bookmark-list ()
   "Get a list of the bookmarks in repo."
   (let* ((base-template (emajjutsu-template/build
 			 (list :name (list :expression "name.escape_json()"))))
-	 (response (emajjutsu-core--execute-internal
+	 (response (emajjutsu-core--execute
 		    "bookmark" "list" "--quiet" "--template"
 		    (format "%s ++ \"|||\"'" (substring base-template 0 -1)))))
     (unless (string-empty-p response)
@@ -169,17 +169,17 @@ When FILEPATHS is NIL all changes are returned."
 
 (defun emajjutsu-core/bookmark-set (bookmark change-id)
   "Set BOOKMARK at CHANGE-ID."
-  (emajjutsu-core--execute-internal
+  (emajjutsu-core--execute
    "bookmark" "set" bookmark "-r" change-id))
 
 (defun emajjutsu-core/bookmark-create (bookmark-name change-id)
   "Create a bookmark with BOOKMARK-NAME at CHANGE-ID."
-  (emajjutsu-core--execute-internal
+  (emajjutsu-core--execute
    "bookmark" "create" bookmark-name "-r" change-id))
 
 (defun emajjutsu-core/bookmark-delete (bookmark)
   "Delete BOOKMARK."
-  (emajjutsu-core--execute-internal "bookmark" "delete" bookmark))
+  (emajjutsu-core--execute "bookmark" "delete" bookmark))
 
 (defun emajjutsu-core/rebase-source (source-change target-change location)
   "Rebase SOURCE-CHANGE (and its descendants) to TARGET-CHANGE.
@@ -189,18 +189,18 @@ TARGET-COMMIT."
 			 (:after "--insert-after")
 			 (:before "--insert-before")
 			 (_ "--destination"))))
-    (emajjutsu-core--execute-internal
+    (emajjutsu-core--execute
      "rebase" nil "--source" source-change location-flag target-change)))
 
 (defun emajjutsu-core/fetch ()
   "Fetch from remote."
   (message
-   (emajjutsu-core--execute-internal "git" "fetch")))
+   (emajjutsu-core--execute "git" "fetch")))
 
 (defun emajjutsu-core/push ()
   "Push current state to remote."
   (message
-   (emajjutsu-core--execute-internal "git" "push" "--allow-new")))
+   (emajjutsu-core--execute "git" "push" "--allow-new")))
 
 (defun emajjutsu-core/squash (files source-change-id target-change-id)
   "Squash the FILES in SOURCE-CHANGE-ID into TARGET-CHANGE-ID."
@@ -208,7 +208,7 @@ TARGET-COMMIT."
 	       'list
 	       files
 	       (list "--from" source-change-id "--into" target-change-id "-u"))))
-    (apply #'emajjutsu-core--execute-internal "squash" args)))
+    (apply #'emajjutsu-core--execute "squash" args)))
 
 (defun emajjutsu-core/split (change-id files description)
   "Split CHANGE-ID into two one with FILES and one without.
@@ -225,8 +225,9 @@ The new change has DESCRIPTION."
       (emajjutsu-core/edit source-id)
       (emajjutsu-core/squash files source-id new-change-id))))
 
-
-
+(defun emajjutsu-core/abandon (change-id)
+  "Abandon the change associated with CHANGE-ID."
+  (emajjutsu-core--execute "abandon" change-id))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

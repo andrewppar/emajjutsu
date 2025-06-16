@@ -104,16 +104,17 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
 	    (propertize short-change 'face emajjutsu-face/change-short)
 	    description)))
 
-(defun emajjutsu-display/change-selection (&optional prompt)
+(defun emajjutsu-display/change-selection (&optional prompt default-change)
   "Interactively select a change-id.
-Optionally supply a PROMPT."
+Optionally supply a PROMPT and DEFAULT-CHANGE."
   (let* ((selection-prompt (or prompt "Select a change: "))
-	 (selection (completing-read
-		     selection-prompt
-		     (mapcar
-		      #'emajjutsu-display--selectable-change
-		      (emajjutsu-core/log-changes nil))
-		     nil t)))
+	 (initial-input (when default-change
+			 (emajjutsu-display--selectable-change
+			  (emajjutsu-core/change-status default-change))))
+	 (changes (mapcar
+		   #'emajjutsu-display--selectable-change
+		   (emajjutsu-core/log-changes nil)))
+	 (selection (completing-read selection-prompt changes nil t initial-input)))
     (car (split-string selection ":"))))
 
 (provide 'emajjutsu-display)
