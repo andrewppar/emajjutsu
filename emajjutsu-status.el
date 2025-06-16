@@ -26,7 +26,7 @@
   (string-join
    (cons
     "Working copy changes: "
-    (mapcar #'emajjutsu-display/show-file-spec file-specs))
+    (mapcar #'emajjutsu-file/show-spec file-specs))
    "\n"))
 
 (defun emajjutsu-status--parents (parent-specs)
