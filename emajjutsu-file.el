@@ -31,18 +31,36 @@
 		    ("D" :deleted)
 		    ("R" :renamed)))))
 
+(defun emajjutsu-file--parse-file (file-string status)
+  "Parse FILE-STRING into a file and a display string based on STATUS."
+  (if (equal status :renamed)
+      (cl-destructuring-bind (base rewrite)
+	  (split-string (string-trim file-string) "{")
+	(let ((new-file (substring (cadr (split-string rewrite "=>")) -1)))
+	  (list :file (format "%s%s" base new-file) :display file-string)))
+    (list :file file-string :display file-string)))
+
 (defun emajjutsu-file/parse-string (string)
   "Parse STRING into a file spec.
 Return NIL if it cannot be parsed."
   (let* ((log-line-p (and (string-prefix-p "│" string)
 			  (string-suffix-p "│" string)))
 	 (stripped (or (and log-line-p (substring string 2 -2)) string))
-	 (split-string (split-string stripped  " " t " ")))
-    (when (and (= (length split-string) 2)
-	       (not (string-prefix-p "Files:" stripped)))
-    (cl-destructuring-bind (status file)
-	  split-string
-	(plist-put (emajjutsu-file--parse-status status) :file file)))))
+	 (split (split-string stripped  " " t " ")))
+    (unless (string-prefix-p "Files:" stripped)
+      (let* ((status-string (car split))
+	     (status-data (emajjutsu-file--parse-status status-string))
+	     (status (plist-get status-data :status)))
+	(cl-destructuring-bind (&key file display)
+	    (emajjutsu-file--parse-file (string-join (cdr split)) status)
+	  (plist-put (plist-put status-data :file file) :display display))))))
+
+(defun emajjutsu-file/at-point ()
+  "Get the filespect at point."
+  (emajjutsu-file/parse-string
+   (buffer-substring-no-properties
+    (line-beginning-position) (line-end-position))))
+
 
 (defun emajjutsu-file/table-start-p (string)
   "Check whether STRING represents the first line of a table."
@@ -55,7 +73,7 @@ Return NIL if it cannot be parsed."
 (defun emajjutsu-file/show-spec (file-spec)
   "Show FILE-SPEC as a string with coloring.
 FILE-SPEC is expected to have keys: status, file, and marked."
-  (cl-destructuring-bind (&key status file marked &allow-other-keys)
+  (cl-destructuring-bind (&key status display marked &allow-other-keys)
       file-spec
     (let ((status-string (cl-case status
 			   (:added "A")
@@ -64,7 +82,7 @@ FILE-SPEC is expected to have keys: status, file, and marked."
 			   (:deleted "D")
 			   (:renamed "R"))))
       (propertize (format "%s%s %s"
-			  status-string  (if marked "*" " ") file)
+			  status-string  (if marked "*" " ") display)
 		  'face
 		  (cl-case status
 		    (:added emajjutsu-face/added-file)
@@ -78,17 +96,6 @@ FILE-SPEC is expected to have keys: status, file, and marked."
   (when-let ((spec (emajjutsu-file/parse-string string)))
     (emajjutsu-file/show-spec
      (plist-put spec :marked (not (plist-get spec :marked))))))
-
-
-(defun emajjutsu-status/diff (change-id)
-  "Show a diff for CHANGE-ID with the file at point."
-  (let* ((line (buffer-substring-no-properties
-		(line-beginning-position) (line-end-position)))
-	 (file (plist-get (emajjutsu-file/parse-string line) :file)))
-    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
-    (erase-buffer)
-    (insert (emajjutsu-core/diff change-id (list file)))
-    (diff-mode)))
 
 (provide 'emajjutsu-file)
 ;;; emajjutsu-file.el ends here

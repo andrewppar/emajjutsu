@@ -73,7 +73,6 @@
     (plist-get :change)
     (plist-get :change-id)))
 
-
 (defun emajjutsu-status/quit ()
   "Quit the current buffer."
   (interactive)
@@ -143,9 +142,7 @@
 
 (defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
-  (let* ((line (buffer-substring-no-properties
-		(line-beginning-position) (line-end-position)))
-	 (file (plist-get (emajjutsu-file/parse-string line) :file))
+  (let* ((file (plist-get (emajjutsu-file/at-point) :file))
 	 (change-id (emajjutsu-status--buffer->data-change-id
 		     (current-buffer))))
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
@@ -169,13 +166,13 @@
 (defun emajjutsu-status/visit-file-at-point ()
   "When there is a file at point, visit that file."
   (interactive)
-  (when-let ((file (emajjutsu-status--filename-at-point)))
+  (when-let ((file (plist-get (emajjutsu-file/at-point) :file)))
     (find-file (string-join (list (emajjutsu-core/root) file) "/"))))
 
 (defun emajjutsu-status/action-at-point ()
   "Take action that is relevant at point."
   (interactive)
-  (cond ((emajjutsu-status--filename-at-point)
+  (cond ((plist-get (emajjutsu-file/at-point) :file)
 	 (emajjutsu-status/visit-file-at-point))
 	((emajjutsu-status/change-at-point)
 	 (emajjutsu-status/follow-change-at-point))))
@@ -202,7 +199,7 @@
 (defun emajjutsu-status/toggle-mark ()
   "Toggle the mark on the file at point."
   (interactive)
-  (when (emajjutsu-status--filename-at-point)
+  (when (plist-get (emajjutsu-file/at-point) :file)
     (emajjutsu-status--with-buffer
      (emajjutsu-status--toggle-mark))))
 

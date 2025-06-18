@@ -233,3 +233,7 @@ The marked files in the buffer are squashed into a target change."
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
+
+;;; This isn't working:
+;;  R resources/migrations/{20250522131225-entity-sighting-observable-joins.down.sql => 20250616174541-entity-sighting-observable-joins.down.sql}
+;; R resources/migrations/{20250522131225-entity-sighting-observable-joins.up.sql => 20250616174541-entity-sighting-observable-joins.up.sql}
