@@ -18,7 +18,7 @@
 (require 'emajjutsu-core)
 (require 'cl-lib)
 
-(defun emajjutsu-display--colorize-id (change-spec change-type parent?)
+(defun emajjutsu-display/colorize-id (change-spec change-type parent?)
   "Display CHANGE-TYPE id for CHANGE-SPEC.
 Bold when PARENT?."
   (let* ((id-key (cl-case change-type (:commit :commit-id) (:change :change-id)))
@@ -48,7 +48,7 @@ Bold when PARENT?."
 	   (t ""))
      'face emajjutsu-face/bookmark)))
 
-(defun emajjutsu-display--description (change-spec parent?)
+(defun emajjutsu-display/description (change-spec parent?)
   "Format the descripition for CHANGE-SPEC, bolding if not PARENT?."
   (let* ((empty-change? (plist-get change-spec :empty))
 	 (description (string-replace "\n" " " (plist-get change-spec :description)))
@@ -83,9 +83,9 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
       change-spec
     (let* ((current-tagline (if (equal current "true") "(@)" "(>)"))
 	   (parent-tagline (if parent? "Parent Commit :" "Working Copy  :"))
-	   (commit-id (emajjutsu-display--colorize-id change-spec :commit parent?))
-	   (change-id (emajjutsu-display--colorize-id change-spec :change parent?))
-	   (description (emajjutsu-display--description change-spec parent?))
+	   (commit-id (emajjutsu-display/colorize-id change-spec :commit parent?))
+	   (change-id (emajjutsu-display/colorize-id change-spec :change parent?))
+	   (description (emajjutsu-display/description change-spec parent?))
 	   (author (if author
 		       (propertize author 'face emajjutsu-face/author)
 		     "")))

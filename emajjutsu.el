@@ -16,6 +16,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'emajjutsu-display)
+(require 'emajjutsu-bookmark)
 (require 'emajjutsu-status)
 (require 'emajjutsu-log)
 
@@ -115,11 +116,7 @@ Otherwise prompt for a parent."
   "Delete BOOKMARK."
   (interactive
    (list
-    (completing-read
-     "bookmarks: "
-     (mapcar
-      (lambda (bookmark) (plist-get bookmark :name))
-      (emajjutsu-core/bookmark-list)))))
+    (emajjutsu-bookmark/bookmark-selection)))
   (emajjutsu--with-buffer-refresh
    (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
      (emajjutsu-core/bookmark-delete bookmark))))
@@ -129,9 +126,7 @@ Otherwise prompt for a parent."
   "Move bookmark to the change at point.
 If the bookmark does not exist, create it."
   (interactive)
-  (let* ((bookmarks (mapcar
-		     (lambda (bookmark) (plist-get bookmark :name))
-		     (emajjutsu-core/bookmark-list)))
+  (let* ((bookmarks (emajjutsu-bookmark/bookmark-selection))
 	 (bookmark (completing-read "bookmarks: " bookmarks))
 	 (change-id (or (emajjutsu--change-id-at-point)
 			(emajjutsu-display/change-selection))))

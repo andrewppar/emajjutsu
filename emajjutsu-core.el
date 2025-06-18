@@ -155,7 +155,13 @@ When FILEPATHS is NIL all changes are returned."
 (defun emajjutsu-core/bookmark-list ()
   "Get a list of the bookmarks in repo."
   (let* ((base-template (emajjutsu-template/build
-			 (list :name (list :expression "name.escape_json()"))))
+			 (list :name (list :expression "name.escape_json()")
+			       :change-id "normal_target.change_id().short()"
+			       :commit-id "normal_target.commit_id().short()"
+			       :short-change "normal_target.change_id().shortest()"
+			       :short-commit "normal_target.commit_id().shortest()"
+			       :empty (list :expression "normal_target.empty()")
+			       :description (list :expression "coalesce(normal_target.description().first_line().escape_json(), \" \")"))))
 	 (response (emajjutsu-core--execute
 		    "bookmark" "list" "--quiet" "--template"
 		    (format "%s ++ \"|||\"'" (substring base-template 0 -1)))))

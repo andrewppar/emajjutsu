@@ -81,7 +81,7 @@
   (delete-window))
 
 (define-derived-mode emajjutsu/status-mode fundamental-mode
-  "View jujutsu repo status."
+  "JJ status"
   "Major mode for viewing jujutsu status."
   (define-key emajjutsu/status-mode-map
       (kbd "C-c q") #'emajjutsu-status/quit))
