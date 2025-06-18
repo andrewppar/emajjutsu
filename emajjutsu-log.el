@@ -20,7 +20,7 @@
 (require 'emajjutsu-file)
 
 (define-derived-mode emajjutsu/log-mode fundamental-mode
-  "View jujutsu repo status."
+  "JJ Log"
   "Major mode for viewing jujutsu status."
   (define-key emajjutsu/log-mode-map
       (kbd "C-c q") (lambda () (interactive) (kill-buffer (current-buffer)))))
@@ -29,7 +29,7 @@
   "Rewrite the log buffer with BODY."
   `(unwind-protect
 	(progn
-	  (switch-to-buffer "*emajjutsu log*")
+	  (switch-to-buffer (format "*emajjutsu log: %s*" default-directory))
 	  (let ((inhibit-read-only t))
 	    (emajjutsu/log-mode)
 	    (progn ,@body)))
@@ -75,6 +75,7 @@ If LIMIT is NIL it is treated as though there is none."
 
 (defun emajjutsu-log/refresh-buffer ()
   "Refresh the log buffer."
+  (interactive)
   (emajjutsu-log/log emajjutsu-log--current-limit))
 
 (defun emajjutsu-log--change-line-p (line)
@@ -248,6 +249,7 @@ The files split are the ones that are marked for that change."
 		(line-beginning-position) (line-end-position)))
 	 (file (plist-get (emajjutsu-file/parse-string line) :file))
 	 (change-id (emajjutsu-log--nearest-change :up)))
+    (split-window-sensibly)
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
     (erase-buffer)
     (insert (emajjutsu-core/diff change-id (list file)))
