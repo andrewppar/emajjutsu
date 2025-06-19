@@ -121,19 +121,28 @@ Otherwise prompt for a parent."
    (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
      (emajjutsu-core/bookmark-delete bookmark))))
 
-;;;###autoload
 (defun emajjutsu/bookmark-set ()
   "Move bookmark to the change at point.
 If the bookmark does not exist, create it."
   (interactive)
-  (let* ((bookmarks (emajjutsu-bookmark/bookmark-selection))
-	 (bookmark (completing-read "bookmarks: " bookmarks))
+  (let* ((bookmark (emajjutsu-bookmark/bookmark-selection))
+	 (bookmarks (mapcar
+		     (lambda (bookmark)
+		       (plist-get bookmark :name))
+		     (emajjutsu-core/bookmark-list)))
 	 (change-id (or (emajjutsu--change-id-at-point)
 			(emajjutsu-display/change-selection))))
     (emajjutsu--with-buffer-refresh
      (if (member bookmark bookmarks)
 	 (emajjutsu-core/bookmark-set bookmark change-id)
        (emajjutsu-core/bookmark-create bookmark change-id)))))
+
+;;;###autoload
+(defun emajjutsu/bookmark-list ()
+  "Open a buffer with a list of bookmarks in the current repo."
+  (interactive)
+  (split-window-sensibly)
+  (emajjutsu-bookmark/list))
 
 (defun emajjutsu/refresh-buffer ()
   "Refresh the data on the current buffer."
@@ -228,7 +237,3 @@ The marked files in the buffer are squashed into a target change."
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
-
-;;; This isn't working:
-;;  R resources/migrations/{20250522131225-entity-sighting-observable-joins.down.sql => 20250616174541-entity-sighting-observable-joins.down.sql}
-;; R resources/migrations/{20250522131225-entity-sighting-observable-joins.up.sql => 20250616174541-entity-sighting-observable-joins.up.sql}

@@ -17,6 +17,11 @@
 (require 'emajjutsu-face)
 (require 'emajjutsu-display)
 
+(defvar emajjutsu-bookmark--buffers
+  '()
+  "The list of emajjutsu bookmark buffers
+(indexed by repo?)")
+
 (defun emajjutsu-bookmark/quit ()
   "Quit the bookmarks buffer."
   (kill-buffer)
@@ -77,8 +82,9 @@
      (line-beginning-position) (line-end-position))
     ":")))
 
-(defun emajjutsu-bookmark/delete ()
+(defun emajjutsu-bookmark/delete-at-point ()
   "Delete the bookmark at point."
+  (interactive)
   (when-let ((bookmark (emajjutsu-bookmark--at-point)))
     (when (y-or-n-p (format "delete bookmark %s? " bookmark))
       (emajjutsu-core/bookmark-delete bookmark))))
