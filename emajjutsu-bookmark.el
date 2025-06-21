@@ -14,6 +14,7 @@
 ;; bookmark management for jj
 
 ;;; Code:
+(require 'cl-lib)
 (require 'emajjutsu-face)
 (require 'emajjutsu-display)
 
@@ -76,20 +77,23 @@
 
 (defun emajjutsu-bookmark--at-point ()
   "Get the bookmark at point."
-  (car
-   (split-string
-    (buffer-substring-no-properties
-     (line-beginning-position) (line-end-position))
-    ":")))
+  (let ((bookmark (car
+		   (split-string
+		    (buffer-substring-no-properties
+		     (line-beginning-position) (line-end-position))
+		    ":"))))
+    (if (string-prefix-p "*" bookmark)
+	(list :name (substring bookmark 1) :marked t)
+      (list :name bookmark :marked nil))))
+
 
 (defun emajjutsu-bookmark/delete-at-point ()
   "Delete the bookmark at point."
   (interactive)
   (when-let ((bookmark (emajjutsu-bookmark--at-point)))
-    (when (y-or-n-p (format "delete bookmark %s? " bookmark))
-      (emajjutsu-core/bookmark-delete bookmark))))
-
-
+    (cl-destructuring-bind (&key name &allow-other-keys) bookmark
+    (when (y-or-n-p (format "delete bookmark %s? " name))
+      (emajjutsu-core/bookmark-delete name)))))
 
 (provide 'emajjutsu-bookmark)
 ;;; emajjutsu-bookmark.el ends here

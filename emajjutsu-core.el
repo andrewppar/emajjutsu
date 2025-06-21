@@ -25,16 +25,28 @@
   "The root of the repo at `default-directory`."
   (string-trim (shell-command-to-string "jj root")))
 
+(defun emajjutsu-core--execute-internal (command subcommand args attempts)
+  "Execute COMMAND with SUBCOMMAND and ARGS.
+ATTEMPTS is how many times this has been attempted, a backout limit
+is set for the number of attempts tried."
+  (let ((default-directory (emajjutsu-core/root))
+	(passed-args (seq-copy args)))
+    (when subcommand (push subcommand passed-args))
+    (push command passed-args)
+    (push emajjutsu/jj passed-args)
+    (let ((response (shell-command-to-string (string-join passed-args " "))))
+      (cond ((string-prefix-p "Error:" response)
+	     (error response))
+	    ((string-prefix-p "Rebased" response)
+	     (if (> attempts 2)
+		 (error response)
+	       (emajjutsu-core--execute-internal
+		command subcommand args (+ attempts 1))))
+	    (t response)))))
+
 (defun emajjutsu-core--execute (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
-  (let ((default-directory (emajjutsu-core/root)))
-    (when subcommand (push subcommand args))
-    (push command args)
-    (push emajjutsu/jj args)
-    (let ((response (shell-command-to-string (string-join args " "))))
-      (if (string-prefix-p "Error:" response)
-	  (error response)
-	response))))
+  (emajjutsu-core--execute-internal command subcommand args 1))
 
 (defconst emajjutsu-core--commit-template
   (emajjutsu-template/build
