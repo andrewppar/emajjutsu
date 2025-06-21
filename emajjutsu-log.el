@@ -15,6 +15,7 @@
 
 ;;; Code:
 (require 'subr-x)
+(require 'cl-lib)
 (require 'emajjutsu-display)
 (require 'emajjutsu-core)
 (require 'emajjutsu-file)
@@ -38,6 +39,35 @@
 (defconst emajjutsu-log--current-limit nil
   "The limit that was passed to emajjutsu-log/log.")
 
+(defun emajjutsu-log--color-change-markers (string)
+  "Propertize any markers in STRING."
+  (thread-last
+    string
+    (string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
+    (string-replace (regexp-quote "×") (propertize "×" 'face emajjutsu-face/conflict))
+    (string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))))
+
+(defun emajjutsu-log--change-marker (change)
+  "Generate a string of the change marker for CHANGE."
+  (cl-destructuring-bind (&key current immutable conflict &allow-other-keys)
+      change
+    (cond ((equal current "true")
+	   (propertize "@" 'face emajjutsu-face/current))
+	  (immutable
+	   (propertize "◆" 'face emajjutsu-face/immutable))
+	  (conflict
+	   (propertize "×" 'face emajjutsu-face/conflict))
+	  (t "○"))))
+
+(defun emajjutsu-log--pad-lines (string)
+  "Add two spaces before each line in STRING."
+  (let ((lines (string-split string "\n")))
+    (seq-reduce
+     (lambda (result line)
+       (format "%s\n  %s" result line))
+     (cdr lines)
+     (car lines))))
+
 (defun emajjutsu-log/log (limit)
   "Create a buffer that displays the jj log with LIMIT.
 If LIMIT is NIL it is treated as though there is none."
@@ -46,24 +76,23 @@ If LIMIT is NIL it is treated as though there is none."
   (emajjutsu-log--with-buffer
    (erase-buffer)
    (insert
-    (string-join
-     (list
-      (format "Directory: %s" default-directory)
-      ""
-      (thread-last
-	(emajjutsu-core/log-tree limit)
-	(string-replace (regexp-quote "@") (propertize "@" 'face emajjutsu-face/current))
-	(string-replace (regexp-quote "×") (propertize "×" 'face emajjutsu-face/conflict))
-	(string-replace (regexp-quote "◆") (propertize "◆" 'face emajjutsu-face/immutable))
-	(seq-reduce
-	 (lambda (acc change-spec)
-	   (let ((change-id (plist-get change-spec :change-id)))
-	     (replace-regexp-in-string
-	      (regexp-quote change-id)
-	      (emajjutsu-display/change change-spec :compact? t)
-	      acc)))
-	 (emajjutsu-core/log-changes nil))))
-     "\n"))
+    (emajjutsu-log--pad-lines
+     (string-join
+      (list
+       (format "Directory: %s" default-directory)
+       ""
+       (thread-last
+	 (emajjutsu-core/log-tree limit)
+	 emajjutsu-log--color-change-markers
+	 (seq-reduce
+	  (lambda (acc change-spec)
+	    (let ((change-id (plist-get change-spec :change-id)))
+	      (replace-regexp-in-string
+	       (regexp-quote change-id)
+	       (emajjutsu-display/change change-spec :compact? t)
+	       acc)))
+	  (emajjutsu-core/log-changes nil))))
+      "\n")))
    (goto-char (point-min))))
 
 (defun emajjutsu-log/quit ()
@@ -83,13 +112,18 @@ If LIMIT is NIL it is treated as though there is none."
   (or (string-prefix-p "@" line)
       (string-prefix-p "◆" line)
       (string-prefix-p "×" line)
+      (string-prefix-p "M" line)
       (string-prefix-p "○" line)))
+
+(defun emajjutsu-log--line ()
+  "Get the line at point."
+  (buffer-substring-no-properties
+   (line-beginning-position) (line-end-position)))
 
 (defun emajjutsu-log/change-at-point ()
   "Get the change at point if it exists."
   (let ((line (thread-last
-		(buffer-substring-no-properties
-		 (line-beginning-position) (line-end-position))
+		(emajjutsu-log--line)
 		(replace-regexp-in-string (regexp-quote "│") "")
 		string-trim)))
     ;; todo: this is configuration specific - so we may have to generalize
@@ -145,8 +179,7 @@ If LIMIT is NIL it is treated as though there is none."
     (save-excursion
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (let ((line (buffer-substring-no-properties
-		   (line-beginning-position) (line-end-position))))
+      (let ((line (emajjutsu-log--line)))
 	(when (emajjutsu-file/table-start-p line)
 	  (while (not (emajjutsu-file/table-end-p line))
 	    (when (and (not (string-prefix-p "│ Files:" line))
@@ -164,8 +197,7 @@ If LIMIT is NIL it is treated as though there is none."
       (emajjutsu-log--with-buffer
        (emajjutsu-log--goto-change-id change-id)
        (forward-line 1)
-       (let ((line (buffer-substring-no-properties
-		    (line-beginning-position) (line-end-position))))
+       (let ((line (emajjutsu-log--line)))
 	 (when (emajjutsu-file/table-start-p line)
 	   (while (not (emajjutsu-file/table-end-p line))
 	     (delete-line)
@@ -180,19 +212,22 @@ If LIMIT is NIL it is treated as though there is none."
     (save-excursion
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (let ((line (buffer-substring-no-properties
-		   (line-beginning-position) (line-end-position))))
+      (let ((line (emajjutsu-log--line)))
 	(if (emajjutsu-file/table-start-p line)
 	    (emajjutsu-log--hide-files)
 	  (emajjutsu-log--show-files))))))
 
+
+(defun emajjutsu-log--file-line-p (line)
+  "Predicate to determine whether LINE represents a file."
+  (and (string-prefix-p "│" line)
+       (string-suffix-p "│" line)))
+
 (defun emajjutsu-log/toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
   (interactive)
-  (let ((line (buffer-substring-no-properties
-	       (line-beginning-position) (line-end-position))))
-    (when (and (string-prefix-p "│" line)
-	       (string-suffix-p "│" line))
+  (let ((line (emajjutsu-log--line)))
+    (when (emajjutsu-log--file-line-p line)
       (let* ((without-suffix (substring line 0 -1))
 	     (pad-size (- (length without-suffix)
 			  (length (string-trim without-suffix))))
@@ -203,6 +238,39 @@ If LIMIT is NIL it is treated as though there is none."
 	  (format "│ %s%s│\n"
 		  (emajjutsu-file/toggle-mark line)
 		  padding)))))))
+
+;; This is great, but it doesn't work for changes that are after
+;; a |
+(defun emajjutsu-log/toggle-change-mark ()
+  "Toggle whether there is mark on the current change."
+  (let* ((line (buffer-substring
+		(line-beginning-position) (line-end-position)))
+	 (test-line (string-trim
+		     (replace-regexp-in-string (regexp-quote "│") ""
+					       (substring line 2)))))
+    (when (or (emajjutsu-log--change-line-p test-line)
+	      ;; if it's already toggled
+	      (and (> (length line) 2)
+		   (emajjutsu-log--change-line-p test-line)))
+      (let* ((marked (string-prefix-p "*" line))
+	     (new-line (format "%s%s\n"
+			       (if marked " " "*")
+			       (substring line 1))))
+	(emajjutsu-log--with-buffer
+	 (delete-line)
+	 (insert new-line))))))
+
+;;(defun emajjutsu-log--marked-changes ()
+;;  "Gather changes that are marked in the current log."
+;;  (let ((result '()))
+;;  (save-excursion
+;;    (goto-char (point-min))
+;;    (while (not (eobp))
+;;      (let ((line (emajjutsu-log--line)))
+;;      (when (and (> (length line) 2)
+;;		 (string-prefix-p "*" line)
+;;		 (emajjutsu-log--change-line-p (substring line 2)))
+;;	(push (caddr
 
 (defun emajjutsu-log--files-for-change-at-point ()
   "Get the files (if they are showing) for the nearest change above point."
