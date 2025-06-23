@@ -249,8 +249,7 @@ The marked files in the buffer are squashed into a target change."
 					 (string-join (cdr marked-changes) ", ")
 					 (car marked-changes))))))
        (when (y-or-n-p (format "Really abandon %s?" change-string))
-	 (dolist (change changes)
-	   (emajjutsu-core/abandon change)))))))
+	 (apply #'emajjutsu-core/abandon changes))))))
 
 ;;;###autoload
 (defun emajjutsu/init ()

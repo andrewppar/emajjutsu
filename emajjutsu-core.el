@@ -243,9 +243,9 @@ The new change has DESCRIPTION."
       (emajjutsu-core/edit source-id)
       (emajjutsu-core/squash files source-id new-change-id))))
 
-(defun emajjutsu-core/abandon (change-id)
-  "Abandon the change associated with CHANGE-ID."
-  (emajjutsu-core--execute "abandon" change-id))
+(defun emajjutsu-core/abandon (change-id &rest others)
+  "Abandon the jj-changes associated with CHANGE-ID and OTHERS."
+  (apply #'emajjutsu-core--execute "abandon" (cons change-id others)))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
