@@ -235,5 +235,12 @@ The marked files in the buffer are squashed into a target change."
      (when (y-or-n-p (format "Really abandon %s: %s?" change-id description))
        (emajjutsu-core/abandon change-id)))))
 
+;;;###autoload
+(defun emajjutsu/init ()
+  "Create or colocate a jj repository in the current directory."
+  (interactive)
+  (message (emajjutsu-core/init)))
+
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
