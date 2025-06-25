@@ -125,6 +125,7 @@ If LIMIT is NIL it is treated as though there is none."
   (let ((line (thread-last
 		(emajjutsu-log--line)
 		(replace-regexp-in-string (regexp-quote "│") "")
+		(replace-regexp-in-string (regexp-quote "*") "")
 		string-trim)))
     ;; todo: this is configuration specific - so we may have to generalize
     ;; or find some way of reading the config... or something else
@@ -239,8 +240,6 @@ If LIMIT is NIL it is treated as though there is none."
 		  (emajjutsu-file/toggle-mark line)
 		  padding)))))))
 
-;; This is great, but it doesn't work for changes that are after
-;; a |
 (defun emajjutsu-log/toggle-change-mark ()
   "Toggle whether there is mark on the current change."
   (let* ((line (buffer-substring
@@ -260,17 +259,18 @@ If LIMIT is NIL it is treated as though there is none."
 	 (delete-line)
 	 (insert new-line))))))
 
-;;(defun emajjutsu-log--marked-changes ()
-;;  "Gather changes that are marked in the current log."
-;;  (let ((result '()))
-;;  (save-excursion
-;;    (goto-char (point-min))
-;;    (while (not (eobp))
-;;      (let ((line (emajjutsu-log--line)))
-;;      (when (and (> (length line) 2)
-;;		 (string-prefix-p "*" line)
-;;		 (emajjutsu-log--change-line-p (substring line 2)))
-;;	(push (caddr
+(defun emajjutsu-log--marked-changes ()
+  "Gather jj-changes that are marked in the current log."
+  (let ((result '()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let ((line (emajjutsu-log--line)))
+	  (when (string-prefix-p "*" line)
+	    (when-let ((change (emajjutsu-log/change-at-point)))
+	      (push change result)))
+	  (forward-line 1))))
+    result))
 
 (defun emajjutsu-log--files-for-change-at-point ()
   "Get the files (if they are showing) for the nearest change above point."
