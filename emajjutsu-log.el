@@ -107,7 +107,7 @@ If LIMIT is NIL it is treated as though there is none."
   (interactive)
   (emajjutsu-log/log emajjutsu-log--current-limit))
 
-(defun emajjutsu-log--change-line-p (line)
+(defun emajjutsu-log--change-line-simple-p (line)
   "A predicate that indicates that LINE is for a change."
   (or (string-prefix-p "@" line)
       (string-prefix-p "◆" line)
@@ -120,17 +120,29 @@ If LIMIT is NIL it is treated as though there is none."
   (buffer-substring-no-properties
    (line-beginning-position) (line-end-position)))
 
+(defun emajjutsu-log--change-line-p (line &rest ignore-prefixes)
+  "Check whether LINE has a change.
+IGNORE-PREFIXES is a list of strings that may precede a change and
+should be ignored for the purposes of the check."
+  (emajjutsu-log--change-line-simple-p
+   (string-trim
+    (seq-reduce
+     (lambda (result prefix-to-ignore)
+       (replace-regexp-in-string (regexp-quote prefix-to-ignore) "" result))
+     ignore-prefixes
+     line))))
+
 (defun emajjutsu-log/change-at-point ()
   "Get the change at point if it exists."
-  (let ((line (thread-last
-		(emajjutsu-log--line)
-		(replace-regexp-in-string (regexp-quote "│") "")
-		(replace-regexp-in-string (regexp-quote "*") "")
-		string-trim)))
+  (let ((line (emajjutsu-log--line)))
     ;; todo: this is configuration specific - so we may have to generalize
     ;; or find some way of reading the config... or something else
-    (when (emajjutsu-log--change-line-p line)
-      (cadr (split-string line " " t " ")))))
+    (when (emajjutsu-log--change-line-p line "│" "*")
+      (let ((change-info (thread-last
+			   line
+			   (replace-regexp-in-string (regexp-quote "│") "")
+			   (replace-regexp-in-string (regexp-quote "*") ""))))
+	(cadr (split-string change-info " " t " "))))))
 
 (defun emajjutsu-log--nearest-change (direction)
   "Scroll in DIRECTION to find the nearest change."
@@ -224,7 +236,7 @@ If LIMIT is NIL it is treated as though there is none."
   (and (string-prefix-p "│" line)
        (string-suffix-p "│" line)))
 
-(defun emajjutsu-log/toggle-file-mark ()
+(defun emajjutsu-log--toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
   (interactive)
   (let ((line (emajjutsu-log--line)))
@@ -240,17 +252,10 @@ If LIMIT is NIL it is treated as though there is none."
 		  (emajjutsu-file/toggle-mark line)
 		  padding)))))))
 
-(defun emajjutsu-log/toggle-change-mark ()
+(defun emajjutsu-log--toggle-change-mark ()
   "Toggle whether there is mark on the current change."
-  (let* ((line (buffer-substring
-		(line-beginning-position) (line-end-position)))
-	 (test-line (string-trim
-		     (replace-regexp-in-string (regexp-quote "│") ""
-					       (substring line 2)))))
-    (when (or (emajjutsu-log--change-line-p test-line)
-	      ;; if it's already toggled
-	      (and (> (length line) 2)
-		   (emajjutsu-log--change-line-p test-line)))
+  (let* ((line (buffer-substring (line-beginning-position) (line-end-position))))
+    (when (emajjutsu-log--change-line-p line "│" "*")
       (let* ((marked (string-prefix-p "*" line))
 	     (mark (propertize "*" 'face emajjutsu-face/warning))
 	     (new-line (format "%s%s\n"
@@ -259,6 +264,15 @@ If LIMIT is NIL it is treated as though there is none."
 	(emajjutsu-log--with-buffer
 	 (delete-line)
 	 (insert new-line))))))
+
+(defun emajjutsu-log/toggle-mark-at-point ()
+  "Toggle a mark for the item at point."
+  (interactive)
+  (cond ((emajjutsu-log--change-line-p (emajjutsu-log--line) "│" "*")
+	 (emajjutsu-log--toggle-change-mark))
+	((emajjutsu-log--file-line-p (emajjutsu-log--line))
+	 (emajjutsu-log--toggle-file-mark))
+	(t nil)))
 
 (defun emajjutsu-log/marked-changes ()
   "Gather jj-changes that are marked in the current log."
