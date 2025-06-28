@@ -75,21 +75,23 @@ Return NIL if it cannot be parsed."
 FILE-SPEC is expected to have keys: status, file, and marked."
   (cl-destructuring-bind (&key status display marked &allow-other-keys)
       file-spec
-    (let ((status-string (cl-case status
-			   (:added "A")
-			   (:modified "M")
-			   (:copied "C")
-			   (:deleted "D")
-			   (:renamed "R"))))
-      (propertize (format "%s%s %s"
-			  status-string  (if marked "*" " ") display)
-		  'face
-		  (cl-case status
-		    (:added emajjutsu-face/added-file)
-		    (:copied emajjutsu-face/copied-file)
-		    (:modified emajjutsu-face/modified-file)
-		    (:deleted emajjutsu-face/deleted-file)
-		    (:renamed emajjutsu-face/modified-file))))))
+    (let* ((face (cl-case status
+		   (:added emajjutsu-face/added-file)
+		   (:copied emajjutsu-face/copied-file)
+		   (:modified emajjutsu-face/modified-file)
+		   (:deleted emajjutsu-face/deleted-file)
+		   (:renamed emajjutsu-face/modified-file)))
+	   (status-string (propertize
+			   (cl-case status
+			     (:added "A")
+			     (:modified "M")
+			     (:copied "C")
+			     (:deleted "D")
+			     (:renamed "R"))
+			   'face face))
+	   (mark (if marked (propertize "*" 'face emajjutsu-face/warning) " "))
+	   (display-string (propertize display 'face face)))
+      (format "%s%s %s" status-string mark display-string))))
 
 (defun emajjutsu-file/toggle-mark (string)
   "Toggle the mark on STRING."

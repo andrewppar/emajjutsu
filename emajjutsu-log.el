@@ -252,14 +252,15 @@ If LIMIT is NIL it is treated as though there is none."
 	      (and (> (length line) 2)
 		   (emajjutsu-log--change-line-p test-line)))
       (let* ((marked (string-prefix-p "*" line))
+	     (mark (propertize "*" 'face emajjutsu-face/warning))
 	     (new-line (format "%s%s\n"
-			       (if marked " " "*")
+			       (if marked " " mark)
 			       (substring line 1))))
 	(emajjutsu-log--with-buffer
 	 (delete-line)
 	 (insert new-line))))))
 
-(defun emajjutsu-log--marked-changes ()
+(defun emajjutsu-log/marked-changes ()
   "Gather jj-changes that are marked in the current log."
   (let ((result '()))
     (save-excursion

@@ -226,14 +226,31 @@ The marked files in the buffer are squashed into a target change."
   "Abandon a change."
   (interactive)
   (emajjutsu--with-buffer-refresh
-   (let* ((change-id (emajjutsu-display/change-selection
-		      "select a change to abandon: "
-		      (emajjutsu--change-id-at-point)))
-	  (description (plist-get
-			(emajjutsu-core/change-status change-id)
-			:description)))
-     (when (y-or-n-p (format "Really abandon %s: %s?" change-id description))
-       (emajjutsu-core/abandon change-id)))))
+   (let ((changes nil))
+     (if-let ((marked-changes (and (equal major-mode 'emajjutsu/log-mode)
+				   (emajjutsu-log/marked-changes))))
+	 (setq changes marked-changes)
+       (let* ((default (emajjutsu--change-id-at-point))
+	      (prompt "select a change to abandon: ")
+	      (change (emajjutsu-display/change-selection prompt  default)))
+	 (push change changes)))
+     (let ((change-string (cond ((equal (length changes) 1)
+				 (let* ((change (car changes))
+					(desc (plist-get
+					       (emajjutsu-core/change-status change)
+					       :description)))
+				   (format "%s: %s" change desc)))
+				((equal (length changes) 2)
+				 (format "%s and %s"
+					 (car changes)
+					 (cadr changes)))
+				(t
+				 (format "%s, and %s"
+					 (string-join (cdr marked-changes) ", ")
+					 (car marked-changes))))))
+       (when (y-or-n-p (format "Really abandon %s?" change-string))
+	 (dolist (change changes)
+	   (emajjutsu-core/abandon change)))))))
 
 ;;;###autoload
 (defun emajjutsu/init ()
