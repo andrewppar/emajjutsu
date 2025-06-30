@@ -328,6 +328,16 @@ The files split are the ones that are marked for that change."
     (emajjutsu-log--with-buffer
      (emajjutsu-core/squash files change-id target-change-id))))
 
+(defun emajjutsu-log/restore ()
+  "Revert the marked files of the curretn change."
+  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+	     (files (thread-last
+		      (emajjutsu-log--files-for-change-at-point)
+		      (seq-filter (lambda (spec) (plist-get spec :marked)))
+		      (mapcar (lambda (spec) (plist-get spec :file))))))
+    (emajjutsu-log--with-buffer
+     (emajjutsu-core/restore files change-id))))
+
 (defun emajjutsu-log/diff ()
   "Show a diff of the file at point."
   (let* ((line (buffer-substring-no-properties

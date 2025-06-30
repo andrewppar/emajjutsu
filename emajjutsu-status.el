@@ -218,7 +218,6 @@
   "Perform emajjutsu split on the marked files.
 Splits are parallel by default.
 DESCRIPTION is applied to the change that gets the marked files."
-  (interactive)
   (let* ((buffer (current-buffer))
 	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
     (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
@@ -226,11 +225,17 @@ DESCRIPTION is applied to the change that gets the marked files."
 
 (defun emajjutsu-status/squash-marks (target-change-id)
   "Squash marked files from the current change into TARGET-CHANGE-ID."
-  (interactive)
   (let* ((buffer (current-buffer))
 	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
     (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
       (emajjutsu-core/squash files change-id target-change-id))))
+
+(defun emajjutsu-status/restore-marks ()
+  "Resotre marked file for the current change."
+  (let* ((buffer (current-buffer))
+	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
+    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+      (emajjutsu-core/restore files change-id))))
 
 (provide 'emajjutsu-status)
 ;;; emajjutsu-status.el ends here

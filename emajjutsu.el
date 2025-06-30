@@ -217,10 +217,22 @@ The marked files in the buffer are squashed into a target change."
    (let* ((target-change-id (emajjutsu-display/change-selection
 			     "squash into change: ")))
      (cond ((equal major-mode 'emajjutsu/status-mode)
-	  (emajjutsu-status/squash-marks target-change-id))
-	 ((equal major-mode 'emajjutsu/log-mode)
-	  (emajjutsu-log/squash target-change-id))
-	 (t nil)))))
+	    (emajjutsu-status/squash-marks target-change-id))
+	   ((equal major-mode 'emajjutsu/log-mode)
+	    (emajjutsu-log/squash target-change-id))
+	   (t nil)))))
+
+(defun emajjutsu/restore ()
+  "Peform a restore.
+The marked files in the buffer are restored to their parent."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (cond
+     ((equal major-mode 'emajjutsu/status-mode)
+      (emajjutsu-status/restore))
+     ((equal major-mode 'emajjutsu/log-mode)
+      (emajjutsu-log/restore))
+     (t nil))))
 
 (defun emajjutsu/abandon ()
   "Abandon a change."

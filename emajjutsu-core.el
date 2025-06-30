@@ -253,5 +253,13 @@ The new change has DESCRIPTION."
   "Abandon the jj-changes associated with CHANGE-ID and OTHERS."
   (apply #'emajjutsu-core--execute "abandon" (cons change-id others)))
 
+(defun emajjutsu-core/restore (files change-id)
+  "Revert FILES for CHANGE-ID."
+  (let ((parent (format "%s-" change-id)))
+    (apply #'emajjutsu-core--execute
+	   "restore" nil
+	   (seq-concatenate 'list files
+			    (list "--to" change-id "--from" parent)))))
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
