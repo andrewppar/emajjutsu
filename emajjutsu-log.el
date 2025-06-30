@@ -120,6 +120,11 @@ If LIMIT is NIL it is treated as though there is none."
   (buffer-substring-no-properties
    (line-beginning-position) (line-end-position)))
 
+(defun emajjutsu-log--file-line-p (line)
+  "Predicate to determine whether LINE represents a file."
+  (and (string-prefix-p "│" line)
+       (string-suffix-p "│" line)))
+
 (defun emajjutsu-log--change-line-p (line &rest ignore-prefixes)
   "Check whether LINE has a change.
 IGNORE-PREFIXES is a list of strings that may precede a change and
@@ -151,8 +156,10 @@ should be ignored for the purposes of the check."
 	(last-line-return 0))
     (save-excursion
       (while (and (not change-id) (= last-line-return 0))
-	(setq change-id (emajjutsu-log/change-at-point)
-	      last-line-return (forward-line line-increment))))
+	(let ((line (emajjutsu-log--line)))
+	  (when (not (emajjutsu-log--file-line-p line))
+	    (setq change-id (emajjutsu-log/change-at-point)))
+	  (setq last-line-return (forward-line line-increment)))))
     change-id))
 
 (defun emajjutsu-log--goto-change-id (change-id)
@@ -231,11 +238,6 @@ should be ignored for the purposes of the check."
 	  (emajjutsu-log--show-files))))))
 
 
-(defun emajjutsu-log--file-line-p (line)
-  "Predicate to determine whether LINE represents a file."
-  (and (string-prefix-p "│" line)
-       (string-suffix-p "│" line)))
-
 (defun emajjutsu-log--toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
   (interactive)
@@ -268,10 +270,10 @@ should be ignored for the purposes of the check."
 (defun emajjutsu-log/toggle-mark-at-point ()
   "Toggle a mark for the item at point."
   (interactive)
-  (cond ((emajjutsu-log--change-line-p (emajjutsu-log--line) "│" "*")
-	 (emajjutsu-log--toggle-change-mark))
-	((emajjutsu-log--file-line-p (emajjutsu-log--line))
+  (cond ((emajjutsu-log--file-line-p (emajjutsu-log--line))
 	 (emajjutsu-log--toggle-file-mark))
+	((emajjutsu-log--change-line-p (emajjutsu-log--line) "│" "*")
+	 (emajjutsu-log--toggle-change-mark))
 	(t nil)))
 
 (defun emajjutsu-log/marked-changes ()
