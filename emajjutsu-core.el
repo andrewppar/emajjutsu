@@ -210,6 +210,12 @@ TARGET-COMMIT."
     (emajjutsu-core--execute
      "rebase" nil "--source" source-change location-flag target-change)))
 
+(defun emajjutsu-core/init ()
+  "Initialize a jj repo in the current directory."
+  (message
+   (shell-command-to-string
+    (format "%s git init --colocate" emajjutsu/jj))))
+
 (defun emajjutsu-core/fetch ()
   "Fetch from remote."
   (message
