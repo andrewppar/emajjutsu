@@ -148,7 +148,8 @@
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
     (erase-buffer)
     (insert (emajjutsu-core/diff change-id (list file)))
-    (diff-mode)))
+    (diff-mode)
+    (goto-char (point-min))))
 
 (defun emajjutsu-status/refresh-buffer ()
   "Refresh the status on the current buffer."

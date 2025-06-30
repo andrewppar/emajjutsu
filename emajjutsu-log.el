@@ -338,7 +338,8 @@ The files split are the ones that are marked for that change."
     (switch-to-buffer (format "*emajjutsu diff: %s*" file))
     (erase-buffer)
     (insert (emajjutsu-core/diff change-id (list file)))
-    (diff-mode)))
+    (diff-mode)
+    (goto-char (point-min))))
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here

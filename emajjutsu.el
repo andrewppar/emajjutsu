@@ -246,8 +246,8 @@ The marked files in the buffer are squashed into a target change."
 					 (cadr changes)))
 				(t
 				 (format "%s, and %s"
-					 (string-join (cdr marked-changes) ", ")
-					 (car marked-changes))))))
+					 (string-join (cdr changes) ", ")
+					 (car changes))))))
        (when (y-or-n-p (format "Really abandon %s?" change-string))
 	 (apply #'emajjutsu-core/abandon changes))))))
 
