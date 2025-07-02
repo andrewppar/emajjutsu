@@ -162,6 +162,10 @@ should be ignored for the purposes of the check."
 	  (setq last-line-return (forward-line line-increment)))))
     change-id))
 
+(defun emajjutsu-log/nearest-change ()
+  "Find the change-id for the current context of point."
+  (emajjutsu-log--nearest-change :up))
+
 (defun emajjutsu-log--goto-change-id (change-id)
   "Go to the line for CHANGE-ID."
   (goto-char (point-min))
@@ -267,10 +271,21 @@ should be ignored for the purposes of the check."
 	 (delete-line)
 	 (insert new-line))))))
 
+(defun emajjutsu-log/at-file-p ()
+  "Return whether point is at a file."
+  (emajjutsu-log--file-line-p (emajjutsu-log--line)))
+
+(defun emajjutsu-log/at-change-p ()
+  "Return whether point is at a change."
+  (let ((line (emajjutsu-log--line)))
+    (and (not (emajjutsu-log--file-line-p line))
+	 (emajjutsu-log--change-line-p line "│" "*"))))
+
+
 (defun emajjutsu-log/toggle-mark-at-point ()
   "Toggle a mark for the item at point."
   (interactive)
-  (cond ((emajjutsu-log--file-line-p (emajjutsu-log--line))
+  (cond ((emajjutsu-log/at-file-p)
 	 (emajjutsu-log--toggle-file-mark))
 	((emajjutsu-log--change-line-p (emajjutsu-log--line) "│" "*")
 	 (emajjutsu-log--toggle-change-mark))

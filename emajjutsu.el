@@ -179,11 +179,19 @@ If the bookmark does not exist, create it."
        (emajjutsu-core/rebase-source
 	source-change target-change location)))))
 
-(defun emajjutsu/log->status-at-point ()
+(defun emajjutsu/log->item-at-point ()
   "From a log view get the status of a particular change."
   (interactive)
   (split-window-sensibly)
-  (emajjutsu-status/status (emajjutsu-log/change-at-point)))
+  (let ((line (buffer-substring-no-properties
+	       (line-beginning-position) (line-end-position))))
+    (if (emajjutsu-log/at-file-p)
+	(find-file
+	 (string-join
+	  (list (emajjutsu-core/root)
+		(plist-get (emajjutsu-file/parse-string line) :file))
+	  "/"))
+      (emajjutsu-status/status (emajjutsu-log/nearest-change)))))
 
 (defun emajjutsu/push ()
   "Push the current state of the repo to remote."
