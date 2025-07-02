@@ -210,6 +210,18 @@ TARGET-COMMIT."
     (emajjutsu-core--execute
      "rebase" nil "--source" source-change location-flag target-change)))
 
+(defun emajjutsu-core/duplicate
+    (source-change target-change &optional description)
+  "Duplicate SOURCE-CHANGE with destination TARGET-CHANGE.
+Add DESCRIPTION to the new change if it's passed in."
+  (let ((response (emajjutsu-core--execute
+		  "duplicate" source-change "-d" target-change)))
+    (cl-destructuring-bind (_duplicated _old-change _as new-change &rest ignore)
+	(string-split response)
+      (if description
+	  (emajjutsu-core/describe new-change description)
+	new-change))))
+
 (defun emajjutsu-core/init ()
   "Initialize a jj repo in the current directory."
   (message

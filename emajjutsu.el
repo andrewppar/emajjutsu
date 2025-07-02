@@ -51,7 +51,7 @@ Return nil if no change ID is found."
   (cond ((equal major-mode 'emajjutsu/status-mode)
 	 (emajjutsu-status/change-at-point))
 	((equal major-mode 'emajjutsu/log-mode)
-	 (emajjutsu-log/change-at-point))
+	 (emajjutsu-log/nearest-change))
 	(t nil)))
 
 (defmacro emajjutsu--with-buffer-refresh (&rest body)
@@ -178,6 +178,23 @@ If the bookmark does not exist, create it."
      (unless (equal location :quit)
        (emajjutsu-core/rebase-source
 	source-change target-change location)))))
+
+(defun emajjutsu/duplicate ()
+  "Duplicate the change at point and select destination."
+  (interactive)
+  (let* ((source-change (or (emajjutsu--change-id-at-point)
+			    (emajjutsu-display/change-selection)))
+	 (target-change (emajjutsu-display/change-selection
+			 "duplicate into change: "))
+	 (description (read-string "new description: "
+				   (plist-get
+				    (emajjutsu-core/change-status source-change)
+				    :description))))
+    (emajjutsu--with-buffer-refresh
+     (if (equal (string-trim description) "")
+	 (emajjutsu-core/duplicate source-change target-change)
+       (emajjutsu-core/duplicate source-change target-change description)))))
+
 
 (defun emajjutsu/log->item-at-point ()
   "From a log view get the status of a particular change."
