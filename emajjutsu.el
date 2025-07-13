@@ -158,26 +158,35 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (message "refreshing...")))
 
-(defun emajjutsu--rebase-source-internal (location)
-  "Rebase the change at point and its descendents on to a selected change.
+(defun emajjutsu--rebase-internal (rebase-type location)
+  "Rebase the change at point on to a selected change.
 
+REBASE-TYPE specifies the children (if any) of the change to be rebased.
 LOCATION specifies whether the rebase is before or after the selected change."
-  (let* ((source-change (or (emajjutsu--change-id-at-point)
-			    (emajjutsu-display/change-selection)))
+  (let* ((change (or (emajjutsu--change-id-at-point)
+		     (emajjutsu-display/change-selection)))
 	 (target-change (emajjutsu-display/change-selection
 			 "rebase destination: ")))
     (emajjutsu--with-buffer-refresh
-     (emajjutsu-core/rebase-source source-change target-change location))))
+     (emajjutsu-core/rebase change target-change rebase-type location))))
 
 (defun emajjutsu/rebase-source ()
   "Rebase the change at point, along with descendents onto a selected change."
   (interactive)
-  (emajjutsu--rebase-source-internal :destination))
+  (emajjutsu--rebase-internal :source :destination))
 
 (defun emajjutsu/rebase-source-before ()
   "Rebase the change and all its descendants before selected change."
   (interactive)
-  (emajjutsu--rebase-source-internal :before))
+  (emajjutsu--rebase-internal :source :before))
+
+(defun emajjutsu/rebase-revision ()
+  "Rebase the change at point onto a selected change."
+  (emajjutsu--rebase-internal :revision :destination))
+
+(defun emajjutsu/rebase-revision-before ()
+  "Rebase the change at point before a selected change."
+  (emajjutsu--rebase-internal :revision :destination))
 
 (defun emajjutsu/duplicate ()
   "Duplicate the change at point and select destination."

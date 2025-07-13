@@ -203,16 +203,31 @@ When FILEPATHS is NIL all changes are returned."
   "Forget BOOKMARK."
   (emajjutsu-core--execute "bookmark" "forget" bookmark))
 
-(defun emajjutsu-core/rebase-source (source-change target-change location)
-  "Rebase SOURCE-CHANGE (and its descendants) to TARGET-CHANGE.
-LOCATION specifies where the rebase will be located with respect to
-TARGET-COMMIT."
+(defun emajjutsu-core/rebase
+    (revision target-change rebase-type location)
+  "Rebase REVISION to TARGET-CHANGE.
+
+REBASE-TYPE: specifies the related revisions to carry over in the rebase.
+There are three options:
+1. :revision - rebases only the selected revision
+2. :branch - rebases the branch above the selected revision
+3. :source - rebases the descendents of the selected revision.
+
+LOCATION: specifies where the rebase is with respect to TARGET-CHANGE.
+There are three options:
+1. :after - rebases onto the target change and rebases all descendents
+2. :before - rebases before the target change and rebases all descendents
+3. :destination - makes the target change a parent."
   (let ((location-flag (pcase location
 			 (:after "--insert-after")
 			 (:before "--insert-before")
-			 (_ "--destination"))))
+			 (:destination "--destination")))
+	(rebase-type-flag (pcase rebase-type
+			    (:revision "--revisions")
+			    (:branch "--branch")
+			    (:source "--source"))))
     (emajjutsu-core--execute
-     "rebase" nil "--source" source-change location-flag target-change)))
+     "rebase" nil rebase-type-flag revision location-flag target-change)))
 
 (defun emajjutsu-core/duplicate
     (source-change target-change &optional description)
