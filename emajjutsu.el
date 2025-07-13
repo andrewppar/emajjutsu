@@ -121,6 +121,14 @@ Otherwise prompt for a parent."
    (when (y-or-n-p (format "delete bookmark: %s?" bookmark))
      (emajjutsu-core/bookmark-delete bookmark))))
 
+(defun emajjutsu/bookmark-forget (bookmark)
+  "Forget BOOKMARK."
+  (interactive
+   (list
+    (emajjutsu-bookmark/bookmark-selection)))
+  (emajjutsu--with-buffer-refresh
+   (emajjutsu-core/forget-bookmark bookmark)))
+
 (defun emajjutsu/bookmark-set ()
   "Move bookmark to the change at point.
 If the bookmark does not exist, create it."

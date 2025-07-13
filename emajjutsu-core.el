@@ -199,6 +199,10 @@ When FILEPATHS is NIL all changes are returned."
   "Delete BOOKMARK."
   (emajjutsu-core--execute "bookmark" "delete" bookmark))
 
+(defun emajjutsu-core/bookmark-forget (bookmark)
+  "Forget BOOKMARK."
+  (emajjutsu-core--execute "bookmark" "forget" bookmark))
+
 (defun emajjutsu-core/rebase-source (source-change target-change location)
   "Rebase SOURCE-CHANGE (and its descendants) to TARGET-CHANGE.
 LOCATION specifies where the rebase will be located with respect to
