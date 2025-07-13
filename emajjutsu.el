@@ -182,11 +182,23 @@ LOCATION specifies whether the rebase is before or after the selected change."
 
 (defun emajjutsu/rebase-revision ()
   "Rebase the change at point onto a selected change."
+  (interactive)
   (emajjutsu--rebase-internal :revision :destination))
 
 (defun emajjutsu/rebase-revision-before ()
   "Rebase the change at point before a selected change."
-  (emajjutsu--rebase-internal :revision :destination))
+  (interactive)
+  (emajjutsu--rebase-internal :revision :before))
+
+(defun emajjutsu/rebase-branch ()
+  "Rebase the change and all its children at point onto a selected change."
+  (interactive)
+  (emajjutsu--rebase-internal :branch :destination))
+
+(defun emajjutsu/rebase-branch-before ()
+  "Rebase the change and all its children at point before a selected change."
+  (interactive)
+  (emajjutsu--rebase-internal :branch :before))
 
 (defun emajjutsu/duplicate ()
   "Duplicate the change at point and select destination."
