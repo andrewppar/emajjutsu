@@ -158,34 +158,26 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (message "refreshing...")))
 
-(defun emajjutsu/rebase-source ()
-  "Rebase the change at point onto a selected change as SOURCE."
-  (interactive)
+(defun emajjutsu--rebase-source-internal (location)
+  "Rebase the change at point and its descendents on to a selected change.
+
+LOCATION specifies whether the rebase is before or after the selected change."
   (let* ((source-change (or (emajjutsu--change-id-at-point)
 			    (emajjutsu-display/change-selection)))
 	 (target-change (emajjutsu-display/change-selection
-			 "rebase destination: "))
-	 (location (pcase (read-char
-			   (string-join
-			    (list
-			     "Rebase Options:"
-			     "'a' - select change to insert after"
-			     "'b' - select change to insert before"
-			     "'n' or 'q' - abort rebase"
-			     (format "otherwise - rebase from %s onto %s"
-				     source-change target-change)
-			     "")
-			    "\n"))
-		     (?b :before)
-		     (?a :after)
-		     (?q :quit)
-		     (?n :quit)
-		     (_ :destination))))
-
+			 "rebase destination: ")))
     (emajjutsu--with-buffer-refresh
-     (unless (equal location :quit)
-       (emajjutsu-core/rebase-source
-	source-change target-change location)))))
+     (emajjutsu-core/rebase-source source-change target-change location))))
+
+(defun emajjutsu/rebase-source ()
+  "Rebase the change at point, along with descendents onto a selected change."
+  (interactive)
+  (emajjutsu--rebase-source-internal :destination))
+
+(defun emajjutsu/rebase-source-before ()
+  "Rebase the change and all its descendants before selected change."
+  (interactive)
+  (emajjutsu--rebase-source-internal :before))
 
 (defun emajjutsu/duplicate ()
   "Duplicate the change at point and select destination."
@@ -301,7 +293,6 @@ The marked files in the buffer are restored to their parent."
   "Create or colocate a jj repository in the current directory."
   (interactive)
   (message (emajjutsu-core/init)))
-
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
