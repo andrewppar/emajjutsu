@@ -28,6 +28,7 @@
 (defconst emajjutsu-face/description (list :foreground "#cdd6f4"))
 (defconst emajjutsu-face/change-short (list :weight 'bold :foreground "#f5c2e7"))
 (defconst emajjutsu-face/commit-short (list :weight 'bold :foreground "#89b4fa"))
+(defconst emajjutsu-face/error (list :foreground "#f38ba8"))
 (defconst emajjutsu-face/warning (list :weight 'bold :foreground "#f9e2af"))
 (defconst emajjutsu-face/commit-or-change (list :foreground "#6c7086"))
 

@@ -25,15 +25,19 @@ Bold when PARENT?."
 	 (id (plist-get change-spec id-key))
 	 (short-key (cl-case change-type (:commit :short-commit) (:change :short-change)))
 	 (short-id (plist-get change-spec short-key))
+	 (divergent (and (equal change-type :change)
+			 (plist-get change-spec :divergent)))
 	 (short-face (cl-case change-type
 		       (:commit emajjutsu-face/commit-short)
 		       (:change emajjutsu-face/change-short)))
 	 (face (if parent?
 		   emajjutsu-face/commit-or-change
 		 (cons :weight (cons 'bold emajjutsu-face/commit-or-change)))))
-    (concat
-     (propertize short-id 'face short-face)
-     (propertize (substring id (length short-id)) 'face face))))
+    (if divergent
+	(propertize (concat id "??") 'face emajjutsu-face/error)
+      (concat
+       (propertize short-id 'face short-face)
+       (propertize (substring id (length short-id)) 'face face)))))
 
 (defun emajjutsu-display--bookmarks (change-spec)
   "Format the bookmarks from CHANGE-SPEC."

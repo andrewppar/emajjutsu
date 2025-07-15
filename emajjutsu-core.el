@@ -56,6 +56,7 @@ is set for the number of attempts tried."
     :author "coalesce(author.email(), \" \")"
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
+    :divergent (list :expression "divergent")
     :current "current_working_copy"
     :empty (list :expression "empty")
     :immutable (list :expression "immutable")
@@ -107,6 +108,26 @@ This includes: change and commit ids and description"
      "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
     "\n" t " ")))
 
+
+(defun emajjutsu-core/changes-files
+    (from-change-specifier to-change-specifier)
+  "Get a list of unique files modified between two change specifiers.
+FROM-CHANGE-SPECIFIER and TO-CHANGE-SPECIFIER specify the range of changes
+to consider.  Returns a list of filenames that were modified in the
+specified range."
+  (let ((template "'change_id.short() ++ \"\n\n\"'")
+	(revisions (format "%s::%s" to-change-specifier from-change-specifier)))
+    (seq-reduce
+     (lambda (acc* file-spec)
+       (let ((name (plist-get file-spec :file)))
+	 (if (member name acc*) acc* (cons name acc*))))
+     (seq-mapcat
+      #'emajjutsu-core/change-files
+      (split-string
+       (emajjutsu-core--execute "log" nil "-r" revisions "--no-graph" "--template" template)
+       "\n\n" t " "))
+     '())))
+
 (defun emajjutsu-core/edit (commit-or-change)
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
   (emajjutsu-core--execute "edit" "-r" commit-or-change))
@@ -120,9 +141,9 @@ LIMIT specifies the number of nodes to fetch."
       (emajjutsu-core--execute
        "log" nil
        "--limit" (format "%s" limit)
-       "--template" "'change_id.short() ++ \"\n\n\"'")
+       "--template" "'commit_id.short() ++ \"\n\n\"'")
     (emajjutsu-core--execute
-     "log" nil "--template" "'change_id.short() ++ \"\n\n\"'")))
+     "log" nil "--template" "'commit_id.short() ++ \"\n\n\"'")))
 
 (defun emajjutsu-core/log-changes (limit)
   "Create a json object for each commit in jj log with LIMIT."

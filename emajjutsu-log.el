@@ -86,9 +86,9 @@ If LIMIT is NIL it is treated as though there is none."
 	 emajjutsu-log--color-change-markers
 	 (seq-reduce
 	  (lambda (acc change-spec)
-	    (let ((change-id (plist-get change-spec :change-id)))
+	    (let ((commit-id (plist-get change-spec :commit-id)))
 	      (replace-regexp-in-string
-	       (regexp-quote change-id)
+	       (regexp-quote commit-id)
 	       (emajjutsu-display/change change-spec :compact? t)
 	       acc)))
 	  (emajjutsu-core/log-changes nil))))
@@ -365,6 +365,12 @@ The files split are the ones that are marked for that change."
     (insert (emajjutsu-core/diff change-id (list file)))
     (diff-mode)
     (goto-char (point-min))))
+
+(defun emajjutsu-log/add-revision-selection ()
+  "Rewrite the log page using a revision formula specified by the user."
+  (interactive)
+  (let ((formula (read-string
+
 
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
