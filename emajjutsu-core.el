@@ -203,26 +203,32 @@ When FILEPATHS is NIL all changes are returned."
   "Create a new change after SOURCE-COMMIT-OR-CHANGE-ID."
   (emajjutsu-core--execute "new" source-commit-or-change-id))
 
-(defun emajjutsu-core/bookmark-list ()
-  "Get a list of the bookmarks in repo."
+(defun emajjutsu-core/bookmark-list (&optional remotes?)
+  "Get a list of the bookmarks in repo.
+Optionally also return REMOTES?."
   (let* ((base-template (emajjutsu-template/build
 			 (list :name (list :expression "name.escape_json()")
 			       :change-id "normal_target.change_id().short()"
+			       :remotes (list :map "x"
+					      (list :expression "stringify(x).escape_json()")
+					      "normal_target.remote_bookmarks()")
 			       :commit-id "normal_target.commit_id().short()"
 			       :short-change "normal_target.change_id().shortest()"
 			       :short-commit "normal_target.commit_id().shortest()"
 			       :empty (list :expression "normal_target.empty()")
 			       :description (list :expression "coalesce(normal_target.description().first_line().escape_json(), \" \")"))))
-	 (response (emajjutsu-core--execute
-		    "bookmark" "list" "--quiet" "--template"
-		    (format "%s ++ \"|||\"'" (substring base-template 0 -1)))))
-    (unless (string-empty-p response)
-      (let ((comma-separated (replace-regexp-in-string
-			      (regexp-quote "|||") "," response)))
-	(json-parse-string (format "[%s]" (substring comma-separated 0 -1))
-			   :object-type 'plist
-			   :array-type 'list
-			   :false-object nil)))))
+	 (template (format "%s ++ \"|||\"'" (substring base-template 0 -1)))
+	 (args (list "bookmark" "list" "--all-remotes" "--quiet" "--template" template)))
+    (unless remotes?
+      (setq args (seq-remove (lambda (arg) (equal arg "--all-remotes")) args)))
+    (let ((response (apply #'emajjutsu-core--execute args)))
+      (unless (string-empty-p response)
+	(let ((comma-separated (replace-regexp-in-string
+				(regexp-quote "|||") "," response)))
+	  (json-parse-string (format "[%s]" (substring comma-separated 0 -1))
+			     :object-type 'plist
+			     :array-type 'list
+			     :false-object nil))))))
 
 (defun emajjutsu-core/bookmark-set (bookmark change-id)
   "Set BOOKMARK at CHANGE-ID."
@@ -245,6 +251,10 @@ When FILEPATHS is NIL all changes are returned."
 (defun emajjutsu-core/bookmark-rename (bookmark new-name)
   "Rename BOOKMARK to NEW-NAME."
   (emajjutsu-core--execute "bookmark" "rename" bookmark new-name))
+
+(defun emajjutsu-core/bookmark-track (bookmark)
+  "Track BOOKMARK."
+  (emajjutsu-core--execute "bookmark" "track" bookmark))
 
 (defun emajjutsu-core/rebase
     (revision target-change rebase-type location)

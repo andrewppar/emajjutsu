@@ -169,6 +169,11 @@ If the bookmark does not exist, create it."
     (emajjutsu--with-buffer-refresh
      (emajjutsu-bookmark/rename bookmark new-name))))
 
+(defun emajjutsu/bookmark-track ()
+  (interactive)
+  (let* ((bookmark (emajjutsu-bookmark/bookmark-selection t)))
+    (emajjutsu--with-buffer-refresh
+     (emajjutsu-bookmark/track bookmark))))
 
 ;;;###autoload
 (defun emajjutsu/bookmark-list ()

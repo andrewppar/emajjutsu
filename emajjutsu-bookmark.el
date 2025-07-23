@@ -20,21 +20,21 @@
 
 (defvar emajjutsu-bookmark--buffers
   '()
-  "The list of emajjutsu bookmark buffers
-(indexed by repo?)")
+  "The list of emajjutsu bookmark buffers (indexed by repo?).")
 
 (defun emajjutsu-bookmark/quit ()
   "Quit the bookmarks buffer."
   (kill-buffer)
   (delete-window))
 
-(defun emajjutsu-bookmark/bookmark-selection ()
-  "Select a bookmark interactively."
-  (completing-read
-   "bookmarks: "
-   (mapcar
-    (lambda (bookmark) (plist-get bookmark :name))
-    (emajjutsu-core/bookmark-list))))
+(defun emajjutsu-bookmark/bookmark-selection (&optional remotes?)
+  "Select a bookmark interactively.
+Optionally include REMOTES?"
+  (let ((bookmarks (mapcar
+		    (lambda (bookmark)
+		      (plist-get bookmark (if remotes? :remotes :name)))
+		    (emajjutsu-core/bookmark-list remotes?))))
+    (completing-read "bookmarks: " bookmarks)))
 
 (define-derived-mode emajjutsu/bookmark-mode fundamental-mode
   "JJ bookmarks"
@@ -98,6 +98,10 @@
 (defun emajjutsu-bookmark/rename (bookmark new-name)
   "Rename BOOKMARK to NEW-NAME."
   (emajjutsu-core/bookmark-rename bookmark new-name))
+
+(defun emajjutsu-bookmark/track (bookmark)
+  "Track BOOKMARK."
+  (emajjutsu-core/bookmark-track bookmark))
 
 (provide 'emajjutsu-bookmark)
 ;;; emajjutsu-bookmark.el ends here
