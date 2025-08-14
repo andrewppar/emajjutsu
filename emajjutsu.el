@@ -341,5 +341,13 @@ The buffer will be refreshed after the operation."
 			 (t nil))))
      (emajjutsu-core/absorb revision))))
 
+;;;###autoload
+(defun emajjutsu/blame (file)
+  (interactive
+   (list (read-file-name "file: ")))
+  (let ((buffer (switch-to-buffer (format "*emajjutsu blame: %s" file))))
+    (erase-buffer)
+    (insert (emajjutsu-core/annotate file))))
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

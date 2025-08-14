@@ -317,5 +317,10 @@ The new change has DESCRIPTION."
   "Absorb files from REVISION."
   (emajjutsu-core--execute "absorb" nil "--from" revision))
 
+(cl-defun emajjutsu-core/annotate (file &key (change-spec "@"))
+  "Annotate FILE with current annotations.
+Change what annotations to show with CHANGE-SPEC (default: \"@\")."
+  (emajjutsu-core--execute "file" "annotate" file "-r" change-spec))
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
