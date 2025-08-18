@@ -366,10 +366,10 @@ The files split are the ones that are marked for that change."
     (diff-mode)
     (goto-char (point-min))))
 
-(defun emajjutsu-log/add-revision-selection ()
-  "Rewrite the log page using a revision formula specified by the user."
-  (interactive)
-  (let ((formula (read-string
+;;(defun emajjutsu-log/add-revision-selection ()
+;;  "Rewrite the log page using a revision formula specified by the user."
+;;  (interactive)
+;;  (let ((formula (read-string
 
 
 (provide 'emajjutsu-log)
