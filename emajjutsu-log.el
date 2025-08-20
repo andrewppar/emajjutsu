@@ -30,7 +30,7 @@
   "Rewrite the log buffer with BODY."
   `(unwind-protect
 	(progn
-	  (switch-to-buffer (format "*emajjutsu log: %s*" default-directory))
+	  (switch-to-buffer (format "*emajjutsu log: %s*" (emajjutsu-core/root)))
 	  (let ((inhibit-read-only t))
 	    (emajjutsu/log-mode)
 	    (progn ,@body)))
