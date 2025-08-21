@@ -315,5 +315,23 @@ The marked files in the buffer are restored to their parent."
   (interactive)
   (message (emajjutsu-core/init)))
 
+;;;###autoload
+(defun emajjutsu/absorb ()
+  "Absorb change in the current buffer based on the major mode.
+
+When in `emajjutsu/status-mode', calls `emajjutsu-status/absorb'.
+When in `emajjutsu/log-mode', calls `emajjutsu-log/absorb'.
+Does nothing in other modes.
+
+The buffer will be refreshed after the operation."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (let ((revision (cond ((equal major-mode 'emajjutsu/status-mode)
+			  (emajjutsu-status/change-at-point))
+			 ((equal major-mode 'emajjutsu/log-mode)
+			  (emajjutsu-log/nearest-change))
+			 (t nil))))
+     (emajjutsu-core/absorb revision))))
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

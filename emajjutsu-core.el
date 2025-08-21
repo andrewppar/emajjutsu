@@ -313,5 +313,9 @@ The new change has DESCRIPTION."
 	   (seq-concatenate 'list files
 			    (list "--to" change-id "--from" parent)))))
 
+(defun emajjutsu-core/absorb (revision)
+  "Absorb files from REVISION."
+  (emajjutsu-core--execute "absorb" nil "--from" revision))
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here

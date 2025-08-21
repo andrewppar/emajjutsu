@@ -371,6 +371,5 @@ The files split are the ones that are marked for that change."
 ;;  (interactive)
 ;;  (let ((formula (read-string
 
-
 (provide 'emajjutsu-log)
 ;;; emajjutsu-log.el ends here
