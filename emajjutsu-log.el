@@ -68,7 +68,7 @@
      (cdr lines)
      (car lines))))
 
-(defun emajjutsu-log/log (limit)
+(defun emajjutsu-log/log (&optional limit)
   "Create a buffer that displays the jj log with LIMIT.
 If LIMIT is NIL it is treated as though there is none."
   (interactive)

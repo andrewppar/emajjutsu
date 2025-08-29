@@ -38,7 +38,15 @@ If the input is invalid or zero, return nil."
       limit)))
 
 ;;;###autoload
-(defun emajjutsu/log (limit)
+(defun emajjutsu/log ()
+  "Create a log entry using Emajjutsu.
+This function is an interactive wrapper around `emajjutsu-log/log', providing a
+convenient way to quickly create log entries in your journaling system."
+  (interactive)
+  (emajjutsu-log/log))
+
+;;;###autoload
+(defun emajjutsu/log-limit (limit)
   "View the log for @.
 Optionally specify LIMIT."
   (interactive
