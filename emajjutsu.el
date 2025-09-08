@@ -171,12 +171,26 @@ If the bookmark does not exist, create it."
 
 REBASE-TYPE specifies the children (if any) of the change to be rebased.
 LOCATION specifies whether the rebase is before or after the selected change."
-  (let* ((change (or (emajjutsu--change-id-at-point)
-		     (emajjutsu-display/change-selection)))
+  (let* ((marked-changes (and (equal major-mode 'emajjutsu/log-mode)
+			      (emajjutsu-log/marked-changes)))
+	 (change (unless marked-changes (or (emajjutsu--change-id-at-point)
+					    (emajjutsu-display/change-selection))))
+	 (changes (or marked-changes (list change)))
 	 (target-change (emajjutsu-display/change-selection
-			 "rebase destination: ")))
+			 "rebase destination: "))
+	 (response '()))
+
     (emajjutsu--with-buffer-refresh
-     (emajjutsu-core/rebase change target-change rebase-type location))))
+     (setq response
+	   (string-join
+	    (mapcar
+	     (lambda (change)
+	       (format "%s: %s"
+		       change
+		       (emajjutsu-core/rebase change target-change rebase-type location)))
+	     changes)
+	    "\n")))
+    (message response)))
 
 (defun emajjutsu/rebase-source ()
   "Rebase the change at point, along with descendents onto a selected change."
