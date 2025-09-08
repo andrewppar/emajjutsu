@@ -16,6 +16,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'emajjutsu-display)
+(require 'emajjutsu-blame)
 (require 'emajjutsu-bookmark)
 (require 'emajjutsu-status)
 (require 'emajjutsu-log)
@@ -355,13 +356,14 @@ The buffer will be refreshed after the operation."
 			 (t nil))))
      (emajjutsu-core/absorb revision))))
 
-;;;###autoload
 (defun emajjutsu/blame (file)
+  "Show blame information for FILE using Emajjutsu.
+Display line-by-line blame information, showing who last modified each line
+and when.  This uses the underlying version control system to retrieve the
+information.  The result is displayed in a specialized blame buffer."
   (interactive
    (list (read-file-name "file: ")))
-  (let ((buffer (switch-to-buffer (format "*emajjutsu blame: %s" file))))
-    (erase-buffer)
-    (insert (emajjutsu-core/annotate file))))
+  (emajjutsu-blame/blame-file file))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

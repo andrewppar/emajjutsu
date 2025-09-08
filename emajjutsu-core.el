@@ -317,10 +317,33 @@ The new change has DESCRIPTION."
   "Absorb files from REVISION."
   (emajjutsu-core--execute "absorb" nil "--from" revision))
 
-(cl-defun emajjutsu-core/annotate (file &key (change-spec "@"))
+(cl-defun emajjutsu-core/annotate-content (file &key (change-spec "@"))
+  (emajjutsu-core--execute
+   "file" "annotate" file "-r" change-spec "-T" "content"))
+
+(cl-defun emajjutsu-core/annotate-blame-data (file &key (change-spec "@"))
   "Annotate FILE with current annotations.
 Change what annotations to show with CHANGE-SPEC (default: \"@\")."
-  (emajjutsu-core--execute "file" "annotate" file "-r" change-spec))
+  (let* ((raw-template (emajjutsu-template/build
+			(list :commit "commit.commit_id().short()"
+			      :short-commit "commit.commit_id().shortest()"
+			      :line "line_number"
+			      :author "coalesce(commit.author().name(), \" \")")))
+	 (template (format "%s ++ \"|||\"'"
+			   (substring raw-template 0 (- (length raw-template) 1))))
+	 (response (emajjutsu-core--execute "file" "annotate" file
+					    "-r" change-spec
+					    "-T" template))
+	 (comma-separated-response (replace-regexp-in-string
+				    (regexp-quote "|||") "," response))
+	 (as-json-string (thread-last
+			   (- (length comma-separated-response) 1)
+			   (substring comma-separated-response 0)
+			   (format "[%s]"))))
+    (json-parse-string as-json-string
+		       :object-type 'plist
+		       :false-object nil
+		       :array-type 'list)))
 
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
