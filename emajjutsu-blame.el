@@ -49,6 +49,18 @@ property set to t."
                  (propertize " " 'display
                              `((margin left-margin) ,text)))))
 
+(defun emajjutsu-blame--get-point-in-file (file)
+  "Return line number at point in an open buffer for FILE.
+
+If FILE is not opened in a buffer, return nil.  If a buffer is found for
+FILE, temporarily switch to it and determine the line number at the current
+point position.  This function is used to support blame operations by
+identifying the current position in the file."
+  (when-let ((buffer (get-file-buffer (expand-file-name file))))
+    (save-window-excursion
+      (switch-to-buffer buffer)
+      (line-number-at-pos))))
+
 (defun emajjutsu-blame/blame-file (file)
   "Display a blame view for FILE in a new buffer.
 Shows the content of FILE with blame annotations in the left margin.
@@ -58,7 +70,8 @@ annotations, and overlays are used to display blame information for
 each line.  The original file's major mode is applied to the buffer."
   (let* ((blame-data (emajjutsu-blame--index (emajjutsu-core/annotate-blame-data file)))
 	 (max-line-idx (length blame-data))
-	 (current-line-idx 0))
+	 (current-line-idx 0)
+	 (existing-line (emajjutsu-blame--get-point-in-file file)))
     (switch-to-buffer (format "emajjutsu-blame: %s" file))
     (insert (emajjutsu-core/annotate-content file))
     (set-window-buffer nil (current-buffer))
@@ -74,16 +87,9 @@ each line.  The original file's major mode is applied to the buffer."
     ;; Force redisplay
     (redisplay t)
     (funcall (assoc-default file auto-mode-alist 'string-match))
-    (goto-char (point-min))))
-
-
-
-
-
-
-
-
-
+    (goto-char (point-min))
+    (when existing-line
+      (forward-line existing-line))))
 
 
 (provide 'emajjutsu-blame)
