@@ -136,7 +136,7 @@ Otherwise prompt for a parent."
    (list
     (emajjutsu-bookmark/bookmark-selection)))
   (emajjutsu--with-buffer-refresh
-   (emajjutsu-core/forget-bookmark bookmark)))
+   (emajjutsu-core/bookmark-forget bookmark)))
 
 (defun emajjutsu/bookmark-set ()
   "Move bookmark to the change at point.
