@@ -250,6 +250,31 @@ There are three options:
     (emajjutsu-core--execute
      "rebase" nil rebase-type-flag revision location-flag target-change)))
 
+(defun emajjutsu-core/rebase-between
+    (revision after-change before-change rebase-type)
+  "Rebase change between specified points.
+
+REVISION is the identifier of the revision to rebase.
+BEFORE-CHANGE is the position where changes should be inserted before.
+AFTER-CHANGE is the position where changes should be inserted after.
+REBASE-TYPE specifies the type of rebase operation:
+  :revision - rebase specific revisions
+  :branch   - rebase an entire branch
+  :source   - rebase from source location
+
+This function executes the rebase command with appropriate flags based on
+the provided parameters."
+  (let ((rebase-type-flag (pcase rebase-type
+			    (:revision "--revisions")
+			    (:branch "--branch")
+			    (:source "--source"))))
+    (emajjutsu-core--execute
+     "rebase" nil
+     rebase-type-flag revision
+     "--insert-after" after-change
+     "--insert-before" before-change)))
+
+
 (defun emajjutsu-core/duplicate
     (source-change target-change &optional description)
   "Duplicate SOURCE-CHANGE with destination TARGET-CHANGE.

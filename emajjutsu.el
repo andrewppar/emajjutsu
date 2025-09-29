@@ -167,16 +167,49 @@ If the bookmark does not exist, create it."
   (emajjutsu--with-buffer-refresh
    (message "refreshing...")))
 
+(defun emajjutsu--selected-changes ()
+  "Return the list of marked revisions or select one.
+
+If in `emajjutsu/log-mode', return the marked changes in the log.
+Otherwise, return a list containing the change ID at point or, if
+no change ID is at point, prompt the user to select a change."
+  (or
+   (and (equal major-mode 'emajjutsu/log-mode)
+	(emajjutsu-log/marked-changes))
+   (list
+    (or (emajjutsu--change-id-at-point)
+	(emajjutsu-display/change-selection)))))
+
+(defun emajjutsu--rebase-between-internal (rebase-type)
+  "Rebase selected revisions between two change.
+
+REBASE-TYPE determines the type of rebase operation to perform.
+REVISIONS is a list of revision identifiers to rebase.
+
+Prompts user to select `after' and `before' change points, then rebases
+each revision in REVISIONS between those points using the specified rebase type.
+Returns and displays a list of result messages from each rebase operation."
+  (interactive)
+  (let ((revisions (emajjutsu--selected-changes))
+	(after (emajjutsu-display/change-selection "after change: "))
+	(before (emajjutsu-display/change-selection "before change: "))
+	(results '()))
+    (emajjutsu--with-buffer-refresh
+     (setq
+      results
+      (mapcar
+       (lambda (revision)
+	 (emajjutsu-core/rebase-between revision after before rebase-type))
+       revisions))
+     (message (string-join results "\n"))
+     results)))
+
 (defun emajjutsu--rebase-internal (rebase-type location)
   "Rebase the change at point on to a selected change.
 
 REBASE-TYPE specifies the children (if any) of the change to be rebased.
 LOCATION specifies whether the rebase is before or after the selected change."
-  (let* ((marked-changes (and (equal major-mode 'emajjutsu/log-mode)
-			      (emajjutsu-log/marked-changes)))
-	 (change (unless marked-changes (or (emajjutsu--change-id-at-point)
-					    (emajjutsu-display/change-selection))))
-	 (changes (or marked-changes (list change)))
+  (let* ((changes (emajjutsu--marked-changes))
 	 (target-change (emajjutsu-display/change-selection
 			 "rebase destination: "))
 	 (response '()))
@@ -203,6 +236,11 @@ LOCATION specifies whether the rebase is before or after the selected change."
   (interactive)
   (emajjutsu--rebase-internal :source :before))
 
+(defun emajjutsu/rebase-source-between ()
+  "Rebase from source between two revisions."
+  (interactive)
+  (emajjutsu--rebase-between-internal :source))
+
 (defun emajjutsu/rebase-revision ()
   "Rebase the change at point onto a selected change."
   (interactive)
@@ -213,6 +251,11 @@ LOCATION specifies whether the rebase is before or after the selected change."
   (interactive)
   (emajjutsu--rebase-internal :revision :before))
 
+(defun emajjutsu/rebase-revision-between ()
+  "Rebase from source between two revisions."
+  (interactive)
+  (emajjutsu--rebase-between-internal :revision))
+
 (defun emajjutsu/rebase-branch ()
   "Rebase the change and all its children at point onto a selected change."
   (interactive)
@@ -222,6 +265,11 @@ LOCATION specifies whether the rebase is before or after the selected change."
   "Rebase the change and all its children at point before a selected change."
   (interactive)
   (emajjutsu--rebase-internal :branch :before))
+
+(defun emajjutsu/rebase-branch-between ()
+  "Rebase from source between two revisions."
+  (interactive)
+  (emajjutsu--rebase-between-internal :branch))
 
 (defun emajjutsu/duplicate ()
   "Duplicate the change at point and select destination."
