@@ -209,7 +209,7 @@ Returns and displays a list of result messages from each rebase operation."
 
 REBASE-TYPE specifies the children (if any) of the change to be rebased.
 LOCATION specifies whether the rebase is before or after the selected change."
-  (let* ((changes (emajjutsu--marked-changes))
+  (let* ((changes (emajjutsu-log/marked-changes))
 	 (target-change (emajjutsu-display/change-selection
 			 "rebase destination: "))
 	 (response '()))
