@@ -102,11 +102,16 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
 (defun emajjutsu-display--selectable-change (change-spec)
   "Create a display string for CHANGE-SPEC in change selection."
   (cl-destructuring-bind
-	(&key change-id short-change description &allow-other-keys)
+	(&key short-change bookmarks description &allow-other-keys)
       change-spec
-    (format "%s: %s"
-	    (propertize short-change 'face emajjutsu-face/change-short)
-	    description)))
+    (if-let ((bookmark-strings (plist-get bookmarks :local)))
+	(format "%s: %s <%s>"
+		(propertize short-change 'face emajjutsu-face/change-short)
+		description
+		(string-join bookmark-strings " "))
+      (format "%s: %s"
+	      (propertize short-change 'face emajjutsu-face/change-short)
+	      description))))
 
 (defun emajjutsu-display/change-selection (&optional prompt default-change)
   "Interactively select a change-id.
