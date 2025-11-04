@@ -19,6 +19,7 @@
 (require 'emajjutsu-display)
 (require 'emajjutsu-core)
 (require 'emajjutsu-file)
+(require 'emajjutsu-table)
 
 (define-derived-mode emajjutsu/log-mode fundamental-mode
   "JJ Log"
@@ -204,10 +205,10 @@ should be ignored for the purposes of the check."
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
       (let ((line (emajjutsu-log--line)))
-	(when (emajjutsu-file/table-start-p line)
+	(when (emajjutsu-file/at-table-start-p)
 	  (while (not (emajjutsu-file/table-end-p line))
 	    (when (and (not (string-prefix-p "│ Files:" line))
-		       (not (emajjutsu-file/table-start-p line)))
+		       (not (emajjutsu-table/start-p line)))
 	      (push (emajjutsu-file/parse-string line) files))
 	    (forward-line 1)
 	    (setq line (buffer-substring-no-properties
@@ -222,7 +223,7 @@ should be ignored for the purposes of the check."
        (emajjutsu-log--goto-change-id change-id)
        (forward-line 1)
        (let ((line (emajjutsu-log--line)))
-	 (when (emajjutsu-file/table-start-p line)
+	 (when (emajjutsu-file/at-table-start-p)
 	   (while (not (emajjutsu-file/table-end-p line))
 	     (delete-line)
 	     (setq line (buffer-substring-no-properties
@@ -236,11 +237,9 @@ should be ignored for the purposes of the check."
     (save-excursion
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (let ((line (emajjutsu-log--line)))
-	(if (emajjutsu-file/table-start-p line)
-	    (emajjutsu-log--hide-files)
-	  (emajjutsu-log--show-files))))))
-
+      (if (emajjutsu-file/at-table-start-p)
+	  (emajjutsu-log--hide-files)
+	(emajjutsu-log--show-files)))))
 
 (defun emajjutsu-log--toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
@@ -281,7 +280,6 @@ should be ignored for the purposes of the check."
     (and (not (emajjutsu-log--file-line-p line))
 	 (emajjutsu-log--change-line-p line "│" "*"))))
 
-
 (defun emajjutsu-log/toggle-mark-at-point ()
   "Toggle a mark for the item at point."
   (interactive)
@@ -313,7 +311,7 @@ should be ignored for the purposes of the check."
       (forward-line 1)
       (let ((line (buffer-substring-no-properties
 		   (line-beginning-position) (line-end-position))))
-	(when (emajjutsu-file/table-start-p line)
+	(when (emajjutsu-file/at-table-start-p)
 	  (while (not (emajjutsu-file/table-end-p line))
 	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
 	      (push file-spec files))
@@ -321,6 +319,87 @@ should be ignored for the purposes of the check."
 	    (setq line (buffer-substring-no-properties
 			(line-beginning-position) (line-end-position)))))))
     files))
+
+(defun emajjutsu-log--change-summary-start-p ()
+  "Point is at the start of a change summary."
+  (let ((first-line (emajjutsu-log--line))
+	(second-line (save-excursion
+		       (forward-line 1)
+		       (emajjutsu-log--line))))
+    (and (emajjutsu-table/start-p first-line)
+	 (string-prefix-p "│ Commit ID:" second-line))))
+
+(defun emajjutsu-log--format-item (prefix item face)
+  "Format a log item with a given PREFIX, ITEM, and FACE.
+The PREFIX is a string prepended to the ITEM.  The ITEM is also
+highlighted with the specified FACE."
+  (format "%s: %s" prefix (propertize item 'face face)))
+
+(defun emajjutsu-log--show-change-summary (change-id)
+  "Insert the summary for CHANGE-ID into the log."
+  (cl-destructuring-bind
+	(&key commit-id change-id bookmarks author committer &allow-other-keys)
+      (emajjutsu-core/change-status change-id)
+    (let ((description (split-string
+			(emajjutsu-core/change-full-description change-id)
+			"\n"))
+	  (files (mapcar
+		  #'emajjutsu-file/show-spec
+		  (emajjutsu-core/change-files change-id)))
+	  (committer-line (emajjutsu-log--format-item
+			   "Committer" committer emajjutsu-face/author))
+	  (author-line (emajjutsu-log--format-item
+			"Author" author emajjutsu-face/author))
+	  (change-line (emajjutsu-log--format-item
+			"Change ID" change-id emajjutsu-face/change-short))
+	  (commit-line (emajjutsu-log--format-item
+			"Commit ID" commit-id emajjutsu-face/commit-short)))
+      (cl-destructuring-bind (&key local remote &allow-other-keys) bookmarks
+	(let* ((bookmarks-line (emajjutsu-log--format-item
+				"Bookmarks"
+				(string-join (append local remote) " ")
+				emajjutsu-face/bookmark))
+	       (lines (thread-last files
+				   (cons "")
+				   (append description)
+				   (cons "")
+				   (cons committer-line)
+				   (cons author-line)
+				   (cons bookmarks-line)
+				   (cons change-line)
+				   (cons commit-line))))
+	  (emajjutsu-log--with-buffer
+	   (insert (emajjutsu-table/draw-border lines))
+	   (insert "\n")))))))
+
+(defun emajjutsu-log--hide-change-summary ()
+  "Hide the change summary if it's displayed."
+  ;; this is a similar of the emajjutsu-log--hide-files
+  ;; the only real differencei sthe check for emajjutsu-log-change-summary-start-p
+  ;; so we should merge those together if we make a third type of inlay
+  (let ((change-id (emajjutsu-log--nearest-change :up)))
+    (save-excursion
+      (emajjutsu-log--with-buffer
+       (emajjutsu-log--goto-change-id change-id)
+       (forward-line)
+       (let ((line (emajjutsu-log--line)))
+	 (when (emajjutsu-log--change-summary-start-p)
+	   (while (not (emajjutsu-file/table-end-p line))
+	     (delete-line)
+	     (setq line (emajjutsu-log--line)))
+	   (delete-line)))))))
+
+(defun emajjutsu-log/toggle-change-summary ()
+  "Hide or show the summary for the change at point."
+  (interactive)
+  (let ((change-id (emajjutsu-log--nearest-change :up)))
+    (save-excursion
+      (emajjutsu-log--goto-change-id change-id)
+      (forward-line 1)
+      (let ((line (emajjutsu-log--line)))
+	(if (emajjutsu-log--change-summary-start-p)
+	    (emajjutsu-log--hide-change-summary)
+	(emajjutsu-log--show-change-summary change-id))))))
 
 (defun emajjutsu-log/split (description)
   "Split the change at point with DESCRIPTION on the new change.

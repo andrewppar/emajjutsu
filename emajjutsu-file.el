@@ -16,6 +16,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'emajjutsu-face)
+(require 'emajjutsu-table)
 
 (defconst emajjutsu-file--jj-file-status
   (list "A" "M" "C" "D" "R")
@@ -61,14 +62,16 @@ Return NIL if it cannot be parsed."
    (buffer-substring-no-properties
     (line-beginning-position) (line-end-position))))
 
-
-(defun emajjutsu-file/table-start-p (string)
-  "Check whether STRING represents the first line of a table."
-  (string-prefix-p "╭" string))
-
-(defun emajjutsu-file/table-end-p (string)
-  "Check whether STRING represents the last line of a table."
-  (string-prefix-p "╰" string))
+(defun emajjutsu-file/at-table-start-p ()
+  "Check whether poitn is at a file table."
+  (let ((first-line (buffer-substring-no-properties
+		     (line-beginning-position) (line-end-position)))
+	(second-line (save-excursion
+		       (forward-line 1)
+		       (buffer-substring-no-properties
+			(line-beginning-position) (line-end-position)))))
+    (and (emajjutsu-table/start-p first-line)
+	 (string-prefix-p "│ Files:" second-line))))
 
 (defun emajjutsu-file/show-spec (file-spec)
   "Show FILE-SPEC as a string with coloring.

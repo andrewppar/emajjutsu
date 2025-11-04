@@ -54,6 +54,7 @@ is set for the number of attempts tried."
     :change-id "change_id.short()"
     :commit-id "commit_id.short()"
     :author "coalesce(author.email(), \" \")"
+    :committer "coalesce(committer.email(), \" \")"
     :short-change "change_id.shortest()"
     :short-commit "commit_id.shortest()"
     :divergent (list :expression "divergent")
@@ -82,6 +83,11 @@ This includes: change and commit ids and description"
    :object-type 'plist
    :false-object nil
    :array-type 'list))
+
+(defun emajjutsu-core/change-full-description (commit-or-change)
+  "Get the full description associated with a COMMIT-OR-CHANGE."
+  (emajjutsu-core--execute
+   "log" nil "--no-graph" "-r" commit-or-change "-T" "description"))
 
 (defun emajjutsu-core/conflicts (commit-or-change)
   "Get conflicting file paths for COMMIT-OR-CHANGE."
