@@ -206,7 +206,7 @@ should be ignored for the purposes of the check."
       (forward-line 1)
       (let ((line (emajjutsu-log--line)))
 	(when (emajjutsu-file/at-table-start-p)
-	  (while (not (emajjutsu-file/table-end-p line))
+	  (while (not (emajjutsu-table/end-p line))
 	    (when (and (not (string-prefix-p "│ Files:" line))
 		       (not (emajjutsu-table/start-p line)))
 	      (push (emajjutsu-file/parse-string line) files))
@@ -224,17 +224,31 @@ should be ignored for the purposes of the check."
        (forward-line 1)
        (let ((line (emajjutsu-log--line)))
 	 (when (emajjutsu-file/at-table-start-p)
-	   (while (not (emajjutsu-file/table-end-p line))
+	   (while (not (emajjutsu-table/end-p line))
 	     (delete-line)
 	     (setq line (buffer-substring-no-properties
 			 (line-beginning-position) (line-end-position))))
 	   (delete-line)))))))
+
+(defun emajjutsu-log--within-inlay-p (inlay-test-fn)
+  "Test whether point is inside an inlay satisfying INLAY-TEST-FN."
+  (let ((last-line-return 0)
+	(result nil)
+	(done nil))
+    (save-excursion
+      (while (and (not done) (= last-line-return 0))
+	(when (emajjutsu-table/start-p (emajjutsu-log--line))
+	  (setq result (funcall inlay-test-fn)
+		done t))
+	(setq last-line-return (forward-line -1))))
+    result))
 
 (defun emajjutsu-log/toggle-change-files ()
   "Hide or show the files for the change at point."
   (interactive)
   (let ((change-id (emajjutsu-log--nearest-change :up)))
     (save-excursion
+      ;; this will have to account for file inlay or summary inlay
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
       (if (emajjutsu-file/at-table-start-p)
@@ -244,7 +258,12 @@ should be ignored for the purposes of the check."
 (defun emajjutsu-log--toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
   (interactive)
-  (let ((line (emajjutsu-log--line)))
+  (when (emajjutsu-log--within-inlay-p #'emajjutsu-file/at-table-start-p)
+    (let ((line (emajjutsu-log--line)))
+      ;; or either check for within a file inlay or make this more
+      ;; robust by checking the change you're at and matching
+      ;; files on the change with a string in the line... (maybe more
+      ;; robust...)
     (when (emajjutsu-log--file-line-p line)
       (let* ((without-suffix (substring line 0 -1))
 	     (pad-size (- (length without-suffix)
@@ -255,7 +274,7 @@ should be ignored for the purposes of the check."
 	 (insert
 	  (format "│ %s%s│\n"
 		  (emajjutsu-file/toggle-mark line)
-		  padding)))))))
+		  padding))))))))
 
 (defun emajjutsu-log--toggle-change-mark ()
   "Toggle whether there is mark on the current change."
@@ -312,7 +331,7 @@ should be ignored for the purposes of the check."
       (let ((line (buffer-substring-no-properties
 		   (line-beginning-position) (line-end-position))))
 	(when (emajjutsu-file/at-table-start-p)
-	  (while (not (emajjutsu-file/table-end-p line))
+	  (while (not (emajjutsu-table/end-p line))
 	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
 	      (push file-spec files))
 	    (forward-line 1)
@@ -384,7 +403,7 @@ highlighted with the specified FACE."
        (forward-line)
        (let ((line (emajjutsu-log--line)))
 	 (when (emajjutsu-log--change-summary-start-p)
-	   (while (not (emajjutsu-file/table-end-p line))
+	   (while (not (emajjutsu-table/end-p line))
 	     (delete-line)
 	     (setq line (emajjutsu-log--line)))
 	   (delete-line)))))))
