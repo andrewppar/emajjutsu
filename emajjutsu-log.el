@@ -215,20 +215,54 @@ should be ignored for the purposes of the check."
 			(line-beginning-position) (line-end-position)))))))
     files))
 
-(defun emajjutsu-log--hide-files ()
-  "Hide the files for the change at point."
+(defun emajjutsu-log--hide-inlay (inlay-test-fn)
   (let ((change-id (emajjutsu-log--nearest-change :up)))
     (save-excursion
       (emajjutsu-log--with-buffer
        (emajjutsu-log--goto-change-id change-id)
        (forward-line 1)
-       (let ((line (emajjutsu-log--line)))
-	 (when (emajjutsu-file/at-table-start-p)
-	   (while (not (emajjutsu-table/end-p line))
-	     (delete-line)
-	     (setq line (buffer-substring-no-properties
-			 (line-beginning-position) (line-end-position))))
-	   (delete-line)))))))
+       (let ((found-inlay-p nil)
+	     (done nil))
+	 (while (not done)
+	   (let ((line (emajjutsu-log--line)))
+	     (cond ((emajjutsu-log--change-line-p line "│" "*")
+		    (setq done t))
+		   (found-inlay-p
+		    (progn
+		      (when (emajjutsu-table/end-p line)
+			(setq done t))
+		      (delete-line)))
+		   (t
+		    (progn
+		      (setq found-inlay-p (funcall inlay-test-fn))
+		      (if found-inlay-p
+			  (delete-line)
+			(forward-line 1))))))))))))
+
+
+(defun emajjutsu-log--hide-files ()
+  "Hide the files for the change at point."
+  (emajjutsu-log--hide-inlay #'emajjutsu-file/at-table-start-p))
+
+(defun emajjutsu-log--hide-change-summary ()
+  "Hide the change summary if it's displayed."
+  (emajjutsu-log--hide-inlay #'emajjutsu-log--change-summary-start-p))
+
+(defun emajjutsu-log--inlay-showing-p (inlay-test-fn)
+  (save-excursion
+    (let ((done nil)
+	  (result nil))
+      (while (and (not done) (not result))
+	(setq done (or (emajjutsu-log/at-change-p) (eobp))
+	      result (or result (funcall inlay-test-fn)))
+	(forward-line 1))
+      result)))
+
+(defun emajjutsu-log--file-inlay-showing-p ()
+  (emajjutsu-log--inlay-showing-p #'emajjutsu-file/at-table-start-p))
+
+(defun emajjutsu-log--change-summary-inlay-showing-p ()
+  (emajjutsu-log--inlay-showing-p #'emajjutsu-log--change-summary-start-p))
 
 (defun emajjutsu-log--within-inlay-p (inlay-test-fn)
   "Test whether point is inside an inlay satisfying INLAY-TEST-FN."
@@ -243,6 +277,7 @@ should be ignored for the purposes of the check."
 	(setq last-line-return (forward-line -1))))
     result))
 
+
 (defun emajjutsu-log/toggle-change-files ()
   "Hide or show the files for the change at point."
   (interactive)
@@ -251,7 +286,7 @@ should be ignored for the purposes of the check."
       ;; this will have to account for file inlay or summary inlay
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (if (emajjutsu-file/at-table-start-p)
+      (if (emajjutsu-log--file-inlay-showing-p)
 	  (emajjutsu-log--hide-files)
 	(emajjutsu-log--show-files)))))
 
@@ -391,23 +426,6 @@ highlighted with the specified FACE."
 	   (insert (emajjutsu-table/draw-border lines))
 	   (insert "\n")))))))
 
-(defun emajjutsu-log--hide-change-summary ()
-  "Hide the change summary if it's displayed."
-  ;; this is a similar of the emajjutsu-log--hide-files
-  ;; the only real differencei sthe check for emajjutsu-log-change-summary-start-p
-  ;; so we should merge those together if we make a third type of inlay
-  (let ((change-id (emajjutsu-log--nearest-change :up)))
-    (save-excursion
-      (emajjutsu-log--with-buffer
-       (emajjutsu-log--goto-change-id change-id)
-       (forward-line)
-       (let ((line (emajjutsu-log--line)))
-	 (when (emajjutsu-log--change-summary-start-p)
-	   (while (not (emajjutsu-table/end-p line))
-	     (delete-line)
-	     (setq line (emajjutsu-log--line)))
-	   (delete-line)))))))
-
 (defun emajjutsu-log/toggle-change-summary ()
   "Hide or show the summary for the change at point."
   (interactive)
@@ -415,10 +433,9 @@ highlighted with the specified FACE."
     (save-excursion
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (let ((line (emajjutsu-log--line)))
-	(if (emajjutsu-log--change-summary-start-p)
-	    (emajjutsu-log--hide-change-summary)
-	(emajjutsu-log--show-change-summary change-id))))))
+      (if (emajjutsu-log--change-summary-inlay-showing-p)
+	  (emajjutsu-log--hide-change-summary)
+	(emajjutsu-log--show-change-summary change-id)))))
 
 (defun emajjutsu-log/split (description)
   "Split the change at point with DESCRIPTION on the new change.
