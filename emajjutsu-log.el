@@ -175,47 +175,11 @@ should be ignored for the purposes of the check."
   ;; over the list...
   (re-search-forward (regexp-quote change-id)))
 
-(defun emajjutsu-log--show-files ()
-  "Show the files for the change at point."
-  (when-let ((change-id (emajjutsu-log--nearest-change :up)))
-    (emajjutsu-log--goto-change-id change-id)
-    (end-of-line)
-    (let* ((files (cons (format "Files: %s" change-id)
-			(mapcar #'emajjutsu-file/show-spec
-				(emajjutsu-core/change-files change-id))))
-	   (max-file (apply #'max (mapcar #'length files)))
-	   (top-divider (string-join (cons "╭" (nconc (make-list (+ 2 max-file) "─") (list "╮")))))
-	   (bottom-divider (string-join (cons "╰" (nconc (make-list (+ 2 max-file) "─") (list "╯")))))
-	   (table-string (string-join
-			  (mapcar
-			   (lambda (line)
-			     (let ((padding (make-string (- max-file (length line)) ? )))
-			       (format "│ %s%s │" line padding)))
-			   files)
-			  "\n")))
-      (emajjutsu-log--with-buffer
-       (insert "\n")
-       (insert (string-join (list top-divider table-string bottom-divider) "\n"))))))
-
-(defun emajjutsu-log--displayed-files ()
-  "Get the displayed files for the change at point."
-  (let ((change-id (emajjutsu-log--nearest-change :up))
-	(files '()))
-    (save-excursion
-      (emajjutsu-log--goto-change-id change-id)
-      (forward-line 1)
-      (let ((line (emajjutsu-log--line)))
-	(when (emajjutsu-file/at-table-start-p)
-	  (while (not (emajjutsu-table/end-p line))
-	    (when (and (not (string-prefix-p "│ Files:" line))
-		       (not (emajjutsu-table/start-p line)))
-	      (push (emajjutsu-file/parse-string line) files))
-	    (forward-line 1)
-	    (setq line (buffer-substring-no-properties
-			(line-beginning-position) (line-end-position)))))))
-    files))
+;;;;;;;;;
+;; Inlays
 
 (defun emajjutsu-log--hide-inlay (inlay-test-fn)
+  "Remove the inlay below point that satisfies INLAY-TEST-FN."
   (let ((change-id (emajjutsu-log--nearest-change :up)))
     (save-excursion
       (emajjutsu-log--with-buffer
@@ -239,16 +203,8 @@ should be ignored for the purposes of the check."
 			  (delete-line)
 			(forward-line 1))))))))))))
 
-
-(defun emajjutsu-log--hide-files ()
-  "Hide the files for the change at point."
-  (emajjutsu-log--hide-inlay #'emajjutsu-file/at-table-start-p))
-
-(defun emajjutsu-log--hide-change-summary ()
-  "Hide the change summary if it's displayed."
-  (emajjutsu-log--hide-inlay #'emajjutsu-log--change-summary-start-p))
-
 (defun emajjutsu-log--inlay-showing-p (inlay-test-fn)
+  "Determine if there is an inlay that satisfies INLAY-TEST-FN at point."
   (save-excursion
     (let ((done nil)
 	  (result nil))
@@ -257,12 +213,6 @@ should be ignored for the purposes of the check."
 	      result (or result (funcall inlay-test-fn)))
 	(forward-line 1))
       result)))
-
-(defun emajjutsu-log--file-inlay-showing-p ()
-  (emajjutsu-log--inlay-showing-p #'emajjutsu-file/at-table-start-p))
-
-(defun emajjutsu-log--change-summary-inlay-showing-p ()
-  (emajjutsu-log--inlay-showing-p #'emajjutsu-log--change-summary-start-p))
 
 (defun emajjutsu-log--within-inlay-p (inlay-test-fn)
   "Test whether point is inside an inlay satisfying INLAY-TEST-FN."
@@ -277,39 +227,43 @@ should be ignored for the purposes of the check."
 	(setq last-line-return (forward-line -1))))
     result))
 
+;;;;;;;;;;;;;;
+;;; file inlay
 
-(defun emajjutsu-log/toggle-change-files ()
-  "Hide or show the files for the change at point."
-  (interactive)
-  (let ((change-id (emajjutsu-log--nearest-change :up)))
-    (save-excursion
-      ;; this will have to account for file inlay or summary inlay
-      (emajjutsu-log--goto-change-id change-id)
-      (forward-line 1)
-      (if (emajjutsu-log--file-inlay-showing-p)
-	  (emajjutsu-log--hide-files)
-	(emajjutsu-log--show-files)))))
+(defun emajjutsu-log--file-inlay-showing-p ()
+  "Test for whether the file inlay is showing."
+  (emajjutsu-log--inlay-showing-p #'emajjutsu-file/at-table-start-p))
 
+(defun emajjutsu-log--show-files (change-id)
+  "Show the files for CHANGE-ID."
+  (let* ((files (mapcar #'emajjutsu-file/show-spec (emajjutsu-core/change-files change-id)))
+	 (title (format "Files: %s" change-id)))
+    (emajjutsu-log--with-buffer
+
+     (insert (emajjutsu-table/draw-border (cons title files)))
+     (insert "\n"))))
+
+(defun emajjutsu-log--hide-files ()
+  "Hide the files for the change at point."
+  (emajjutsu-log--hide-inlay #'emajjutsu-file/at-table-start-p))
+
+;; file inlays have marks too
 (defun emajjutsu-log--toggle-file-mark ()
   "Toggle the mark at the file at point, if there is one."
   (interactive)
   (when (emajjutsu-log--within-inlay-p #'emajjutsu-file/at-table-start-p)
     (let ((line (emajjutsu-log--line)))
-      ;; or either check for within a file inlay or make this more
-      ;; robust by checking the change you're at and matching
-      ;; files on the change with a string in the line... (maybe more
-      ;; robust...)
-    (when (emajjutsu-log--file-line-p line)
-      (let* ((without-suffix (substring line 0 -1))
-	     (pad-size (- (length without-suffix)
-			  (length (string-trim without-suffix))))
-	     (padding (make-string pad-size ? )))
-	(emajjutsu-log--with-buffer
-	 (delete-line)
-	 (insert
-	  (format "│ %s%s│\n"
-		  (emajjutsu-file/toggle-mark line)
-		  padding))))))))
+      (when (emajjutsu-log--file-line-p line)
+	(let* ((without-suffix (substring line 0 -1))
+	       (pad-size (- (length without-suffix)
+			    (length (string-trim without-suffix))))
+	       (padding (make-string pad-size ? )))
+	  (emajjutsu-log--with-buffer
+	   (delete-line)
+	   (insert
+	    (format "│ %s%s│\n"
+		    (emajjutsu-file/toggle-mark line)
+		    padding))))))))
 
 (defun emajjutsu-log--toggle-change-mark ()
   "Toggle whether there is mark on the current change."
@@ -356,23 +310,27 @@ should be ignored for the purposes of the check."
 	  (forward-line 1))))
     result))
 
-(defun emajjutsu-log--files-for-change-at-point ()
-  "Get the files (if they are showing) for the nearest change above point."
-  (let ((change-id (emajjutsu-log--nearest-change :up))
-	(files ()))
+(defun emajjutsu-log/toggle-change-files ()
+  "Hide or show the files for the change at point."
+  (interactive)
+  (let ((change-id (emajjutsu-log--nearest-change :up)))
     (save-excursion
       (emajjutsu-log--goto-change-id change-id)
       (forward-line 1)
-      (let ((line (buffer-substring-no-properties
-		   (line-beginning-position) (line-end-position))))
-	(when (emajjutsu-file/at-table-start-p)
-	  (while (not (emajjutsu-table/end-p line))
-	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
-	      (push file-spec files))
-	    (forward-line 1)
-	    (setq line (buffer-substring-no-properties
-			(line-beginning-position) (line-end-position)))))))
-    files))
+      (if (emajjutsu-log--file-inlay-showing-p)
+	  (emajjutsu-log--hide-files)
+	(emajjutsu-log--show-files change-id)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; change summary inlay
+
+(defun emajjutsu-log--hide-change-summary ()
+  "Hide the change summary if it's displayed."
+  (emajjutsu-log--hide-inlay #'emajjutsu-log--change-summary-start-p))
+
+(defun emajjutsu-log--change-summary-inlay-showing-p ()
+  "Test for whether the change summary inlay is showing."
+  (emajjutsu-log--inlay-showing-p #'emajjutsu-log--change-summary-start-p))
 
 (defun emajjutsu-log--change-summary-start-p ()
   "Point is at the start of a change summary."
@@ -436,6 +394,27 @@ highlighted with the specified FACE."
       (if (emajjutsu-log--change-summary-inlay-showing-p)
 	  (emajjutsu-log--hide-change-summary)
 	(emajjutsu-log--show-change-summary change-id)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; other log operations
+
+(defun emajjutsu-log--files-for-change-at-point ()
+  "Get the files (if they are showing) for the nearest change above point."
+  (let ((change-id (emajjutsu-log--nearest-change :up))
+	(files ()))
+    (save-excursion
+      (emajjutsu-log--goto-change-id change-id)
+      (forward-line 1)
+      (let ((line (buffer-substring-no-properties
+		   (line-beginning-position) (line-end-position))))
+	(when (emajjutsu-file/at-table-start-p)
+	  (while (not (emajjutsu-table/end-p line))
+	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
+	      (push file-spec files))
+	    (forward-line 1)
+	    (setq line (buffer-substring-no-properties
+			(line-beginning-position) (line-end-position)))))))
+    files))
 
 (defun emajjutsu-log/split (description)
   "Split the change at point with DESCRIPTION on the new change.

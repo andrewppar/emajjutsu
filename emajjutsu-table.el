@@ -40,8 +40,5 @@
 	    (list bottom)))
      "\n")))
 
-
-
-
 (provide 'emajjutsu-table)
 ;;; emajjutsu-table.el ends here
