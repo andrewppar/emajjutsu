@@ -108,13 +108,21 @@ If LIMIT is NIL it is treated as though there is none."
   (interactive)
   (emajjutsu-log/log emajjutsu-log--current-limit))
 
+(defconst emajjutsu-log--reverse-hex
+  (mapcar #'identity "klmnopqrstuvwxyz"))
+
 (defun emajjutsu-log--change-line-simple-p (line)
   "A predicate that indicates that LINE is for a change."
-  (or (string-prefix-p "@" line)
-      (string-prefix-p "◆" line)
-      (string-prefix-p "×" line)
-      (string-prefix-p "M" line)
-      (string-prefix-p "○" line)))
+  (when (or (string-prefix-p "@" line)
+	    (string-prefix-p "◆" line)
+	    (string-prefix-p "×" line)
+	    (string-prefix-p "M" line)
+	    (string-prefix-p "○" line))
+    (let ((second-element (cadr (split-string line " " t " "))))
+      (and (= (length second-element) 12)
+	   (seq-every-p
+	    (lambda (char) (member char emajjutsu-log--reverse-hex))
+	    second-element)))))
 
 (defun emajjutsu-log--line ()
   "Get the line at point."
