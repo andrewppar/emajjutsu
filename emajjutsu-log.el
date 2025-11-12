@@ -69,9 +69,10 @@
      (cdr lines)
      (car lines))))
 
-(defun emajjutsu-log/log (&optional limit)
-  "Create a buffer that displays the jj log with LIMIT.
-If LIMIT is NIL it is treated as though there is none."
+(defun emajjutsu-log/log (&optional limit revisions)
+  "Create a buffer that displays the jj log with LIMIT and REVISIONS.
+If LIMIT is NIL it is treated as though there is none.
+If REVISIONS is not specified, the default is used."
   (interactive)
   (setq emajjutsu-log--current-limit limit)
   (emajjutsu-log--with-buffer
@@ -83,7 +84,7 @@ If LIMIT is NIL it is treated as though there is none."
        (format "Directory: %s" default-directory)
        ""
        (thread-last
-	 (emajjutsu-core/log-tree limit)
+	 (emajjutsu-core/log-tree limit revisions)
 	 emajjutsu-log--color-change-markers
 	 (seq-reduce
 	  (lambda (acc change-spec)
@@ -92,7 +93,7 @@ If LIMIT is NIL it is treated as though there is none."
 	       (regexp-quote commit-id)
 	       (emajjutsu-display/change change-spec :compact? t)
 	       acc)))
-	  (emajjutsu-core/log-changes nil))))
+	  (emajjutsu-core/log-changes nil revisions))))
       "\n")))
    (goto-char (point-min))))
 

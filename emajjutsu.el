@@ -47,12 +47,20 @@ convenient way to quickly create log entries in your journaling system."
   (emajjutsu-log/log))
 
 ;;;###autoload
-(defun emajjutsu/log-limit (limit)
+(defun emajjutsu/log-custom (limit revisions)
   "View the log for @.
-Optionally specify LIMIT."
+Optionally specify LIMIT.
+Optionally specify REVISIONS."
   (interactive
-   (list (emajjutsu--read-limit)))
-  (emajjutsu-log/log limit))
+   (let ((revision-default (string-join
+			    (list
+			     "present(@)"
+			     "ancestors(immutable_heads().., 2)"
+			     "present(trunk())")
+			    " | ")))
+   (list (emajjutsu--read-limit)
+	 (read-string "revisions: " revision-default nil revision-default))))
+  (emajjutsu-log/log limit revisions))
 
 (defun emajjutsu--change-id-at-point ()
   "Get the change id at point if it exists.

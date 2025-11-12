@@ -138,39 +138,51 @@ specified range."
   "Swap current change to COMMIT-OR-CHANGE (using `jj edit`)."
   (emajjutsu-core--execute "edit" "-r" commit-or-change))
 
-(defun emajjutsu-core/log-tree (limit)
+(defun emajjutsu-core--add-arg (args arg-key arg-value)
+  "Add ARG-VALUE to ARGS under ARG-KEY."
+  (cons arg-key (cons arg-value args)))
+
+(defun emajjutsu-core/log-tree (limit revisions)
   "Get the jj string representing a log tree.
 
 That is all of the lines connecting nodes, with only change ids at nodes.
-LIMIT specifies the number of nodes to fetch."
-  (if limit
-      (emajjutsu-core--execute
-       "log" nil
-       "--limit" (format "%s" limit)
-       "--template" "'commit_id.short() ++ \"\n\n\"'")
-    (emajjutsu-core--execute
-     "log" nil "--template" "'commit_id.short() ++ \"\n\n\"'")))
+LIMIT specifies the number of nodes to fetch.
+REVISIONS specifies the revisions to fetch."
+  (let ((template "'commit_id.short() ++ \"\n\n\"'")
+	(args '()))
+    (setq args (emajjutsu-core--add-arg args "--template" template))
+    (when limit
+      (setq args
+	    (emajjutsu-core--add-arg args "--limit" (format "%s" limit))))
+    (when revisions
+      (setq args
+	    (emajjutsu-core--add-arg
+	     args "--revisions" (format "'%s'" revisions))))
+    (apply #'emajjutsu-core--execute "log" nil args)))
 
-(defun emajjutsu-core/log-changes (limit)
+
+(defun emajjutsu-core/log-changes (limit revisions)
   "Create a json object for each commit in jj log with LIMIT."
-  (let* ((template (format "%s ++ \"|||\"'"
-			   (substring emajjutsu-core--commit-template
-				      0 (- (length emajjutsu-core--commit-template) 1))))
-	 (response (if limit
-		       (emajjutsu-core--execute
-			"log" nil "--no-graph"
-			"--limit" (format "%s" limit)  "--template" template)
-		     (emajjutsu-core--execute
-		      "log" nil "--no-graph" "--template" template)))
-	 (comma-separated-response (replace-regexp-in-string
-				    (regexp-quote "|||") "," response))
-	 (as-json-string (format "[%s]"
-				 (substring comma-separated-response
-					    0 (- (length comma-separated-response) 1)))))
-    (json-parse-string as-json-string
-		       :object-type 'plist
-		       :array-type 'list
-		       :false-object nil)))
+  (let ((template (format "%s ++ \"|||\"'"
+			  (substring emajjutsu-core--commit-template
+				     0 (- (length emajjutsu-core--commit-template) 1))))
+	(args '()))
+    (setq args (emajjutsu-core--add-arg args "--template" template))
+    (when limit
+      (setq args
+	    (emajjutsu-core--add-arg args "--limit" (format "%s" limit))))
+    (when revisions
+      (setq args
+	    (emajjutsu-core--add-arg
+	     args "--revisions" (format "'%s'" revisions))))
+    (let* ((response (apply #'emajjutsu-core--execute "log" nil "--no-graph" args))
+	   (comma-separated (replace-regexp-in-string (regexp-quote "|||") "," response))
+	   (as-json-string (format "[%s]" (substring comma-separated 0 (- (length comma-separated) 1)))))
+      (json-parse-string as-json-string
+			 :object-type 'plist
+			 :array-type 'list
+			 :false-object nil))))
+
 
 (defun emajjutsu-core/diff (commit-or-change-id &optional filepaths)
   "Get the diff for COMMIT-OR-CHANGE-ID optionally also specify FILEPATHS.
