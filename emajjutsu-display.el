@@ -122,7 +122,7 @@ Optionally supply a PROMPT and DEFAULT-CHANGE."
 			  (emajjutsu-core/change-status default-change))))
 	 (changes (mapcar
 		   #'emajjutsu-display--selectable-change
-		   (emajjutsu-core/log-changes nil)))
+		   (emajjutsu-core/log-changes nil "all()")))
 	 (selection (completing-read selection-prompt changes nil t initial-input)))
     (car (split-string selection ":"))))
 
