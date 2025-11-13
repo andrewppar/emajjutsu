@@ -44,7 +44,7 @@ is set for the number of attempts tried."
 		command subcommand args (+ attempts 1))))
 	    (t response)))))
 
-
+(defun emajjutsu-core--execute (command subcommand &rest args)
   "Execute COMMAND with SUBCOMMAND and ARGS."
   (emajjutsu-core--execute-internal command subcommand args 1))
 
