@@ -242,6 +242,10 @@ When FILEPATHS is NIL all changes are returned."
   "Forget BOOKMARK."
   (emajjutsu-core--execute "bookmark" "forget" bookmark))
 
+(defun emajjutsu-core/bookmark-rename (bookmark new-name)
+  "Rename BOOKMARK to NEW-NAME."
+  (emajjutsu-core--execute "bookmark" "rename" bookmark new-name))
+
 (defun emajjutsu-core/rebase
     (revision target-change rebase-type location)
   "Rebase REVISION to TARGET-CHANGE.

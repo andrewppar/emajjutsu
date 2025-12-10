@@ -162,6 +162,14 @@ If the bookmark does not exist, create it."
 	 (emajjutsu-core/bookmark-set bookmark change-id)
        (emajjutsu-core/bookmark-create bookmark change-id)))))
 
+(defun emajjutsu/bookmark-rename ()
+  (interactive)
+  (let* ((bookmark (emajjutsu-bookmark/bookmark-selection))
+	 (new-name (read-string "new name: " bookmark)))
+    (emajjutsu--with-buffer-refresh
+     (emajjutsu-bookmark/rename bookmark new-name))))
+
+
 ;;;###autoload
 (defun emajjutsu/bookmark-list ()
   "Open a buffer with a list of bookmarks in the current repo."

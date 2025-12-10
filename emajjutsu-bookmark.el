@@ -95,5 +95,9 @@
     (when (y-or-n-p (format "delete bookmark %s? " name))
       (emajjutsu-core/bookmark-delete name)))))
 
+(defun emajjutsu-bookmark/rename (bookmark new-name)
+  "Rename BOOKMARK to NEW-NAME."
+  (emajjutsu-core/bookmark-rename bookmark new-name))
+
 (provide 'emajjutsu-bookmark)
 ;;; emajjutsu-bookmark.el ends here
