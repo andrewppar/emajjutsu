@@ -425,7 +425,7 @@ The buffer will be refreshed after the operation."
 			 (t nil))))
      (emajjutsu-core/absorb revision))))
 
-(defun emajjutsu/blame (file)
+(defun emajjutsu/blame-file (file)
   "Show blame information for FILE using Emajjutsu.
 Display line-by-line blame information, showing who last modified each line
 and when.  This uses the underlying version control system to retrieve the
@@ -433,6 +433,12 @@ information.  The result is displayed in a specialized blame buffer."
   (interactive
    (list (read-file-name "file: ")))
   (emajjutsu-blame/blame-file file))
+
+(defun emajjutsu/blame ()
+  "Show blame information for the current file."
+  (interactive)
+  (when-let ((file (expand-file-name (buffer-file-name (current-buffer)))))
+    (emajjutsu-blame/blame-file file)))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
