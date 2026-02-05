@@ -124,6 +124,16 @@ Otherwise prompt for a parent."
 	  (emajjutsu-log/diff))
 	 (t nil))))
 
+(defun emajjutsu/diff-bookmark (bookmark-name)
+  "Diff the current change with the change at BOOKMARK-NAME."
+  (interactive
+   (list (emajjutsu-bookmark/bookmark-selection)))
+  (emajjutsu--with-buffer-refresh
+   (cond ((equal major-mode 'emajjutsu/status-mode)
+	  (emajjutsu-status/diff-bookmark bookmark-name))
+	 ((equal major-mode 'emajjutsu/log-mode)
+	  (emajjutsu-log/diff-bookmark bookmark-name))
+	 (t nil))))
 
 (defun emajjutsu/bookmarks ()
   "List bookmarks in repo."

@@ -456,18 +456,35 @@ The files split are the ones that are marked for that change."
     (emajjutsu-log--with-buffer
      (emajjutsu-core/restore files change-id))))
 
+(defun emajjutsu-log--diff-buffer (files contents)
+  "Display CONTENTS in a diff buffer for FILES."
+  (split-window-sensibly)
+  (switch-to-buffer (format "*emajjutsu diff: %s*" (string-join files ", ")))
+  (erase-buffer)
+  (insert contents)
+  (diff-mode)
+  (goto-char (point-min)))
+
 (defun emajjutsu-log/diff ()
   "Show a diff of the file at point."
   (let* ((line (buffer-substring-no-properties
 		(line-beginning-position) (line-end-position)))
 	 (file (plist-get (emajjutsu-file/parse-string line) :file))
 	 (change-id (emajjutsu-log--nearest-change :up)))
-    (split-window-sensibly)
-    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
-    (erase-buffer)
-    (insert (emajjutsu-core/diff change-id (list file)))
-    (diff-mode)
-    (goto-char (point-min))))
+    (emajjutsu-log--diff-buffer
+     (list file) (emajjutsu-core/diff change-id :filepaths (list file)))))
+
+(defun emajjutsu-log/diff-bookmark (bookmark-name)
+  "Generate a diff between the current change and the chage at BOOKMARK-NAME."
+  (let ((change-id (emajjutsu-log--nearest-change :up))
+	(target-change-id (seq-some
+			   (lambda (bookmark-spec)
+			     (cl-destructuring-bind (&key name change-id &allow-other-keys)
+				 bookmark-spec
+			       (when (equal name bookmark-name) change-id)))
+			   (emajjutsu-core/bookmark-list))))
+    (emajjutsu-log--diff-buffer
+     nil (emajjutsu-core/diff change-id :target-change target-change-id))))
 
 ;;(defun emajjutsu-log/add-revision-selection ()
 ;;  "Rewrite the log page using a revision formula specified by the user."

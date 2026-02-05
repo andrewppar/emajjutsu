@@ -140,16 +140,34 @@
 		    (split-string " " t " ")
 		    car))))
 
+(defun emajjutsu-status--diff-buffer (files contents)
+  "Generate a diff buffer for CONTENTS labeled for FILES."
+  (switch-to-buffer (if files
+			(format "*emajjutsu diff: %s*" (string-join files ", "))
+		      "*emajjutsu diff*"))
+  (erase-buffer)
+  (insert contents)
+  (diff-mode)
+  (goto-char (point-min)))
+
 (defun emajjutsu-status/diff ()
   "Show a diff of the file at point."
   (let* ((file (plist-get (emajjutsu-file/at-point) :file))
-	 (change-id (emajjutsu-status--buffer->data-change-id
-		     (current-buffer))))
-    (switch-to-buffer (format "*emajjutsu diff: %s*" file))
-    (erase-buffer)
-    (insert (emajjutsu-core/diff change-id (list file)))
-    (diff-mode)
-    (goto-char (point-min))))
+	 (change-id (emajjutsu-status--buffer->data-change-id (current-buffer))))
+    (emajjutsu-status--diff-buffer
+     (list file) (emajjutsu-core/diff change-id :filepaths (list file)))))
+
+(defun emajjutsu-status/diff-bookmark (bookmark-name)
+  "Generate a diff between the current change and the chage at BOOKMARK-NAME."
+  (let ((change-id (emajjutsu-status--buffer->data-change-id (current-buffer)))
+	(target-change-id (seq-some
+			   (lambda (bookmark-spec)
+			     (cl-destructuring-bind (&key name change-id &allow-other-keys)
+				 bookmark-spec
+			       (when (equal name bookmark-name) change-id)))
+			   (emajjutsu-core/bookmark-list))))
+    (emajjutsu-status--diff-buffer
+     nil (emajjutsu-core/diff change-id :target-change target-change-id))))
 
 (defun emajjutsu-status/refresh-buffer ()
   "Refresh the status on the current buffer."

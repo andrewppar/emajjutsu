@@ -184,10 +184,14 @@ REVISIONS specifies the revisions to fetch."
 			 :false-object nil))))
 
 
-(defun emajjutsu-core/diff (commit-or-change-id &optional filepaths)
-  "Get the diff for COMMIT-OR-CHANGE-ID optionally also specify FILEPATHS.
+(cl-defun emajjutsu-core/diff (commit-or-change-id &key filepaths target-change)
+  "Get the diff for COMMIT-OR-CHANGE-ID.
+Optionally also specify FILEPATHS and TARGET-CHANGE as keywords
 When FILEPATHS is NIL all changes are returned."
-  (let ((args (list "--git" "-r" commit-or-change-id)))
+  (let* ((rev-spec (if target-change
+		       (format "%s..%s" target-change commit-or-change-id)
+		     commit-or-change-id))
+	 (args (list "--git" "-r" rev-spec)))
     (dolist (filepath filepaths)
       (push filepath args))
     (push "diff" args)
