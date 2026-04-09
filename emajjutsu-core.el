@@ -312,7 +312,7 @@ the provided parameters."
      "--insert-before" before-change)))
 
 (cl-defun emajjutsu-core/duplicate
-    (source-change target-change &keys description scope)
+    (source-change target-change &key description scope)
   "Duplicate SOURCE-CHANGE onto TARGET-CHANGE.
 
 Optionaly pass:
