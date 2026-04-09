@@ -302,9 +302,7 @@ LOCATION specifies whether the rebase is before or after the selected change."
   (interactive)
   (emajjutsu--rebase-between-internal :branch))
 
-(defun emajjutsu/duplicate ()
-  "Duplicate the change at point and select destination."
-  (interactive)
+(defun emajjutsu--duplicate (scope)
   (let* ((source-change (or (emajjutsu--change-id-at-point)
 			    (emajjutsu-display/change-selection)))
 	 (target-change (emajjutsu-display/change-selection
@@ -316,8 +314,18 @@ LOCATION specifies whether the rebase is before or after the selected change."
     (emajjutsu--with-buffer-refresh
      (if (equal (string-trim description) "")
 	 (emajjutsu-core/duplicate source-change target-change)
-       (emajjutsu-core/duplicate source-change target-change description)))))
+       (emajjutsu-core/duplicate
+	source-change target-change :description description :scope scope)))))
 
+(defun emajjutsu/duplicate-branch ()
+  "Duplicate the branch at point and select destination."
+  (interactive)
+  (emajjutsu--duplicate :branch))
+
+(defun emajjutsu/duplicate-change ()
+  "Duplicate the change at point and select destination."
+  (interactive)
+  (emajjutsu--duplicate :change))
 
 (defun emajjutsu/log->item-at-point ()
   "From a log view get the status of a particular change."

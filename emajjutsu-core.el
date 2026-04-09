@@ -14,6 +14,7 @@
 ;; Execute jj commands from within Emacs
 
 ;;; Code:
+(require 'cl-lib)
 (require 'emajjutsu-template)
 (require' emajjutsu-file)
 (require 'subr-x)
@@ -310,13 +311,19 @@ the provided parameters."
      "--insert-after" after-change
      "--insert-before" before-change)))
 
+(cl-defun emajjutsu-core/duplicate
+    (source-change target-change &keys description scope)
+  "Duplicate SOURCE-CHANGE onto TARGET-CHANGE.
 
-(defun emajjutsu-core/duplicate
-    (source-change target-change &optional description)
-  "Duplicate SOURCE-CHANGE with destination TARGET-CHANGE.
-Add DESCRIPTION to the new change if it's passed in."
-  (let ((response (emajjutsu-core--execute
-		  "duplicate" source-change "-d" target-change)))
+Optionaly pass:
+DESCRIPTION: a description for the new change
+SCOPE: The scope of the duplciation - :branch copies the whole branch.
+All else copies source itself."
+  (let* ((source-revset (pcase scope
+			  (:branch (format "%s::" source-change))
+			  (_ source-change)))
+	 (response (emajjutsu-core--execute
+		    "duplicate" "-r" source-revset "-d" target-change)))
     (cl-destructuring-bind (_duplicated _old-change _as new-change &rest ignore)
 	(string-split response)
       (if description
