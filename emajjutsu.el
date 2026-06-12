@@ -459,6 +459,7 @@ information.  The result is displayed in a specialized blame buffer."
     (emajjutsu-blame/blame-file file)))
 
 (defun emajjutsu/quickview-file-at-point ()
+  "Open up a file for quick vieweing an closing."
   (interactive)
   (let* ((change-id (emajjutsu--change-id-at-point))
 	(filepath (plist-get (emajjutsu-file/at-point) :file))
@@ -469,7 +470,25 @@ information.  The result is displayed in a specialized blame buffer."
        buffer `((side . bottom) (slot . 0) (window-height . ,(/ (window-height) 3))))
       (insert (emajjutsu-file/show change-id filepath))
       (setq-local buffer-file-name filepath)
-      (set-auto-mode))))
+      (set-auto-mode)
+      (setq-local buffer-file-name nil)
+      (pop-to-buffer buffer))))
+
+(defun emajjutsu/view-file-at-point ()
+  "Open up the file at change at point in a more persistent way than quickvew."
+  (interactive)
+  (let* ((change-id (emajjutsu--change-id-at-point))
+	(filepath (plist-get (emajjutsu-file/at-point) :file))
+	(buffer (get-buffer-create (format "*emajjutsu-view: %s@%s*" filepath change-id))))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert (emajjutsu-file/show change-id filepath))
+      (setq-local buffer-file-name filepath)
+      (set-auto-mode)
+      (setq-local buffer-file-name nil)
+      (pop-to-buffer buffer))
+    buffer))
+
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
