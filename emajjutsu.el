@@ -458,5 +458,18 @@ information.  The result is displayed in a specialized blame buffer."
   (when-let ((file (expand-file-name (buffer-file-name (current-buffer)))))
     (emajjutsu-blame/blame-file file)))
 
+(defun emajjutsu/quickview-file-at-point ()
+  (interactive)
+  (let* ((change-id (emajjutsu--change-id-at-point))
+	(filepath (plist-get (emajjutsu-file/at-point) :file))
+	(buffer (get-buffer-create (format "*emajjutsu-quickview: %s@%s*" filepath change-id))))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (display-buffer-in-side-window
+       buffer `((side . bottom) (slot . 0) (window-height . ,(/ (window-height) 3))))
+      (insert (emajjutsu-file/show change-id filepath))
+      (setq-local buffer-file-name filepath)
+      (set-auto-mode))))
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

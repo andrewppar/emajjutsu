@@ -102,5 +102,8 @@ FILE-SPEC is expected to have keys: status, file, and marked."
     (emajjutsu-file/show-spec
      (plist-put spec :marked (not (plist-get spec :marked))))))
 
+(defun emajjutsu-file/show (change-id filepath)
+  (emajjutsu-core/show-file change-id filepath))
+
 (provide 'emajjutsu-file)
 ;;; emajjutsu-file.el ends here

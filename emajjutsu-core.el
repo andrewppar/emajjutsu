@@ -385,6 +385,10 @@ The new change has DESCRIPTION."
   "Absorb files from REVISION."
   (emajjutsu-core--execute "absorb" nil "--from" revision))
 
+(defun emajjutsu-core/show-file (change-id filepath)
+  "Generate the string of FILEPATH at CHANGE-ID."
+  (emajjutsu-core--execute "file" "show" filepath "-r" change-id))
+
 (cl-defun emajjutsu-core/annotate-content (file &key (change-spec "@"))
   (emajjutsu-core--execute
    "file" "annotate" file "-r" change-spec "-T" "content"))
