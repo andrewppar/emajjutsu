@@ -104,7 +104,7 @@ Passing :PARENT? t ensures that the change is formatted as a parent."
   (cl-destructuring-bind
 	(&key short-change bookmarks description &allow-other-keys)
       change-spec
-    (if-let ((bookmark-strings (plist-get bookmarks :local)))
+    (if-let* ((bookmark-strings (plist-get bookmarks :local)))
 	(format "%s: %s <%s>"
 		(propertize short-change 'face emajjutsu-face/change-short)
 		description
