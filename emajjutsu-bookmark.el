@@ -90,7 +90,7 @@ Optionally include REMOTES?"
 (defun emajjutsu-bookmark/delete-at-point ()
   "Delete the bookmark at point."
   (interactive)
-  (when-let ((bookmark (emajjutsu-bookmark--at-point)))
+  (when-let* ((bookmark (emajjutsu-bookmark--at-point)))
     (cl-destructuring-bind (&key name &allow-other-keys) bookmark
     (when (y-or-n-p (format "delete bookmark %s? " name))
       (emajjutsu-core/bookmark-delete name)))))

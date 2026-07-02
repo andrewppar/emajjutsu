@@ -56,7 +56,7 @@ If FILE is not opened in a buffer, return nil.  If a buffer is found for
 FILE, temporarily switch to it and determine the line number at the current
 point position.  This function is used to support blame operations by
 identifying the current position in the file."
-  (when-let ((buffer (get-file-buffer (expand-file-name file))))
+  (when-let* ((buffer (get-file-buffer (expand-file-name file))))
     (save-window-excursion
       (switch-to-buffer buffer)
       (line-number-at-pos))))

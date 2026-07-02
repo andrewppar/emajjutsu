@@ -98,7 +98,7 @@ FILE-SPEC is expected to have keys: status, file, and marked."
 
 (defun emajjutsu-file/toggle-mark (string)
   "Toggle the mark on STRING."
-  (when-let ((spec (emajjutsu-file/parse-string string)))
+  (when-let* ((spec (emajjutsu-file/parse-string string)))
     (emajjutsu-file/show-spec
      (plist-put spec :marked (not (plist-get spec :marked))))))
 

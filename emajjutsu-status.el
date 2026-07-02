@@ -185,7 +185,7 @@
 (defun emajjutsu-status/visit-file-at-point ()
   "When there is a file at point, visit that file."
   (interactive)
-  (when-let ((file (plist-get (emajjutsu-file/at-point) :file)))
+  (when-let* ((file (plist-get (emajjutsu-file/at-point) :file)))
     (find-file (string-join (list (emajjutsu-core/root) file) "/"))))
 
 (defun emajjutsu-status/action-at-point ()
@@ -238,21 +238,21 @@ Splits are parallel by default.
 DESCRIPTION is applied to the change that gets the marked files."
   (let* ((buffer (current-buffer))
 	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
-    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+    (when-let* ((files (emajjutsu-status--buffer->data-marked-files buffer)))
       (emajjutsu-core/split change-id files description))))
 
 (defun emajjutsu-status/squash-marks (target-change-id)
   "Squash marked files from the current change into TARGET-CHANGE-ID."
   (let* ((buffer (current-buffer))
 	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
-    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+    (when-let* ((files (emajjutsu-status--buffer->data-marked-files buffer)))
       (emajjutsu-core/squash files change-id target-change-id))))
 
 (defun emajjutsu-status/restore-marks ()
   "Resotre marked file for the current change."
   (let* ((buffer (current-buffer))
 	 (change-id (emajjutsu-status--buffer->data-change-id buffer)))
-    (when-let ((files (emajjutsu-status--buffer->data-marked-files buffer)))
+    (when-let* ((files (emajjutsu-status--buffer->data-marked-files buffer)))
       (emajjutsu-core/restore files change-id))))
 
 (provide 'emajjutsu-status)

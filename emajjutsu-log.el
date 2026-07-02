@@ -314,7 +314,7 @@ should be ignored for the purposes of the check."
       (while (not (eobp))
 	(let ((line (emajjutsu-log--line)))
 	  (when (string-prefix-p "*" line)
-	    (when-let ((change (emajjutsu-log/change-at-point)))
+	    (when-let* ((change (emajjutsu-log/change-at-point)))
 	      (push change result)))
 	  (forward-line 1))))
     result))
@@ -418,7 +418,7 @@ highlighted with the specified FACE."
 		   (line-beginning-position) (line-end-position))))
 	(when (emajjutsu-file/at-table-start-p)
 	  (while (not (emajjutsu-table/end-p line))
-	    (when-let ((file-spec (emajjutsu-file/parse-string line)))
+	    (when-let* ((file-spec (emajjutsu-file/parse-string line)))
 	      (push file-spec files))
 	    (forward-line 1)
 	    (setq line (buffer-substring-no-properties
@@ -428,7 +428,7 @@ highlighted with the specified FACE."
 (defun emajjutsu-log/split (description)
   "Split the change at point with DESCRIPTION on the new change.
 The files split are the ones that are marked for that change."
-  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+  (when-let* ((change-id (emajjutsu-log--nearest-change :up))
 	     (files (thread-last
 		      (emajjutsu-log--files-for-change-at-point)
 		      (seq-filter (lambda (spec) (plist-get spec :marked)))
@@ -438,7 +438,7 @@ The files split are the ones that are marked for that change."
 
 (defun emajjutsu-log/squash (target-change-id)
   "Squash the marked files of the current change to TARGET-CHANGE-ID."
-  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+  (when-let* ((change-id (emajjutsu-log--nearest-change :up))
 	     (files (thread-last
 		      (emajjutsu-log--files-for-change-at-point)
 		      (seq-filter (lambda (spec) (plist-get spec :marked)))
@@ -448,7 +448,7 @@ The files split are the ones that are marked for that change."
 
 (defun emajjutsu-log/restore ()
   "Revert the marked files of the curretn change."
-  (when-let ((change-id (emajjutsu-log--nearest-change :up))
+  (when-let* ((change-id (emajjutsu-log--nearest-change :up))
 	     (files (thread-last
 		      (emajjutsu-log--files-for-change-at-point)
 		      (seq-filter (lambda (spec) (plist-get spec :marked)))

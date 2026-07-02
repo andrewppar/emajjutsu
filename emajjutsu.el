@@ -455,7 +455,7 @@ information.  The result is displayed in a specialized blame buffer."
 (defun emajjutsu/blame ()
   "Show blame information for the current file."
   (interactive)
-  (when-let ((file (expand-file-name (buffer-file-name (current-buffer)))))
+  (when-let* ((file (expand-file-name (buffer-file-name (current-buffer)))))
     (emajjutsu-blame/blame-file file)))
 
 (defun emajjutsu/quickview-file-at-point ()
