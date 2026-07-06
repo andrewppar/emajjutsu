@@ -344,7 +344,7 @@ All else copies source itself."
 (defun emajjutsu-core/push ()
   "Push current state to remote."
   (message
-   (emajjutsu-core--execute "git" "push" "--allow-new")))
+   (emajjutsu-core--execute "git" "push")))
 
 (defun emajjutsu-core/squash (files source-change-id target-change-id)
   "Squash the FILES in SOURCE-CHANGE-ID into TARGET-CHANGE-ID."
