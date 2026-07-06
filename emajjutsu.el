@@ -22,14 +22,14 @@
 (require 'emajjutsu-log)
 
 ;;;###autoload
-(defun emajjutsu/status (&optional change-id)
+(defun emajjutsu/status (&optional change-id include-description?)
   "View the status of CHANGE-ID.
 If CHANGE-ID is not provided, default to '@'."
   (interactive
    (list
     (read-string "change: " "@" nil "@")))
   (let ((id (if (equal change-id "") "@" change-id)))
-    (emajjutsu-status/status id)))
+    (emajjutsu-status/status id include-description?)))
 
 (defun emajjutsu--read-limit ()
   "Prompt the user to input a limit and return it as a number.

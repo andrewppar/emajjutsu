@@ -107,11 +107,15 @@
 	  (progn ,@body))
      (read-only-mode 1)))
 
-(defun emajjutsu-status/status (change-id)
+(defun emajjutsu-status/status (change-id &optional include-description?)
   "Create a buffer to display jujutsu status for CHANGE-ID."
   (let* ((buffer (switch-to-buffer (format "*emajjutsu status: %s*" change-id)))
 	 (change (emajjutsu-core/change-status change-id))
 	 (files (emajjutsu-core/change-files change-id))
+	 (description (if include-description?
+			  (format "\n%s\n"
+				  (emajjutsu-core/change-full-description change-id))
+			""))
 	 (parents (plist-get change :parents)))
     (emajjutsu-status--add-buffer-data
      buffer (list :change change :files files))
@@ -121,7 +125,7 @@
       (string-join
        (list
 	(format "Directory: %s" default-directory)
-	""
+	description
 	(emajjutsu-status--files files)
 	(emajjutsu-display/change change)
 	(emajjutsu-status--parents (mapcar #'emajjutsu-core/change-status parents))

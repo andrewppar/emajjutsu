@@ -115,7 +115,6 @@ This includes: change and commit ids and description"
      "show" "--summary" "--template" "\" \"" "-r" commit-or-change)
     "\n" t " ")))
 
-
 (defun emajjutsu-core/changes-files
     (from-change-specifier to-change-specifier)
   "Get a list of unique files modified between two change specifiers.
