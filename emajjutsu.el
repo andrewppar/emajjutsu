@@ -339,7 +339,7 @@ LOCATION specifies whether the rebase is before or after the selected change."
 	  (list (emajjutsu-core/root)
 		(plist-get (emajjutsu-file/parse-string line) :file))
 	  "/"))
-      (emajjutsu-status/status (emajjutsu-log/nearest-change)))))
+      (emajjutsu-status/status (emajjutsu-log/nearest-change) t))))
 
 (defun emajjutsu/push ()
   "Push the current state of the repo to remote."
