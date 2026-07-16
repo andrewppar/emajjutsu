@@ -90,6 +90,20 @@ This includes: change and commit ids and description"
   (emajjutsu-core--execute
    "log" nil "--no-graph" "-r" commit-or-change "-T" "description"))
 
+(defun emajjutsu-core--ancestors (commit-or-change)
+  (mapcar
+   (lambda (block) (plist-get block :id))
+   (json-parse-string
+    (format
+     "[%s]"
+     (string-replace
+      "}{" "},{"
+      (emajjutsu-core--execute
+       "log" nil "--no-graph" "-r" (format "::%s" commit-or-change)
+       "-T" (emajjutsu-template/build (list :id "commit_id.shortest()")))))
+    :object-type 'plist
+    :array-type 'list)))
+
 (defun emajjutsu-core/conflicts (commit-or-change)
   "Get conflicting file paths for COMMIT-OR-CHANGE."
   (seq-reduce
@@ -283,8 +297,22 @@ There are three options:
 			    (:revision "--revisions")
 			    (:branch "--branch")
 			    (:source "--source"))))
-    (emajjutsu-core--execute
-     "rebase" nil rebase-type-flag revision location-flag target-change)))
+    (cond ((equal location :before)
+
+	   (let ((ancestors (emajjutsu-core--ancestors revision)))
+	     (cl-destructuring-bind (&key parents &allow-other-keys)
+		 (emajjutsu-core/change-status target-change)
+	       (let ((siblings (seq-reduce
+				(lambda (result commit-id)
+				  (if (member commit-id ancestors)
+				      result
+				    (cons "-o" (cons commit-id result))))
+				parents
+				(list "-o" revision))))
+		 (apply #'emajjutsu-core--execute "rebase" nil "-s" target-change siblings)))))
+	  (t (emajjutsu-core--execute
+	      "rebase" nil rebase-type-flag revision location-flag target-change)))))
+
 
 (defun emajjutsu-core/rebase-between
     (revision after-change before-change rebase-type)
