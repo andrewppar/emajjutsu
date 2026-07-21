@@ -313,6 +313,13 @@ There are three options:
 	  (t (emajjutsu-core--execute
 	      "rebase" nil rebase-type-flag revision location-flag target-change)))))
 
+(defun emajjutsu-core/make-merge-change (merge-change changes)
+  (cl-destructuring-bind (&key parents &allow-other-keys)
+      (emajjutsu-core/change-status merge-change)
+    (let ((sibling-args (mapcan
+			 (lambda (change-id) (list "-o" change-id))
+			 (seq-concatenate 'list changes parents))))
+      (apply #'emajjutsu-core--execute "rebase" nil "-s" merge-change sibling-args))))
 
 (defun emajjutsu-core/rebase-between
     (revision after-change before-change rebase-type)

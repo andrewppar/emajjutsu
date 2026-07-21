@@ -20,6 +20,7 @@
 (require 'emajjutsu-bookmark)
 (require 'emajjutsu-status)
 (require 'emajjutsu-log)
+(require 'emajjutsu-core)
 
 ;;;###autoload
 (defun emajjutsu/status (&optional change-id include-description?)
@@ -395,7 +396,7 @@ The marked files in the buffer are restored to their parent."
   (interactive)
   (emajjutsu--with-buffer-refresh
    (let ((changes nil))
-     (if-let ((marked-changes (and (equal major-mode 'emajjutsu/log-mode)
+     (if-let* ((marked-changes (and (equal major-mode 'emajjutsu/log-mode)
 				   (emajjutsu-log/marked-changes))))
 	 (setq changes marked-changes)
        (let* ((default (emajjutsu--change-id-at-point))
@@ -489,6 +490,15 @@ information.  The result is displayed in a specialized blame buffer."
       (pop-to-buffer buffer))
     buffer))
 
+(defun emajjutsu/make-merge-change ()
+  "Make all marked commits merge into a single selected commit."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   ;; this only makes sense in log mode
+   (if-let* ((marked-changes (if (equal major-mode 'emajjutsu/log-mode)
+				 (emajjutsu-log/marked-changes)))
+	     (merge-change (emajjutsu-display/change-selection "Select merge change: ")))
+       (emajjutsu-core/make-merge-change merge-change marked-changes))))
 
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here
