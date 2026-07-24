@@ -253,10 +253,15 @@ Optionally also return REMOTES?."
   (emajjutsu-core--execute
    "bookmark" "set" bookmark "-r" change-id))
 
+(defun emajjutsu-core--list-remotes ()
+  "List identifiers for remote repositories."
+  (mapcar #'string-trim (split-string (emajjutsu-core--execute "git" "remote" "list"))))
+
 (defun emajjutsu-core/bookmark-create (bookmark-name change-id)
   "Create a bookmark with BOOKMARK-NAME at CHANGE-ID."
-  (emajjutsu-core--execute
-   "bookmark" "create" bookmark-name "-r" change-id))
+  (emajjutsu-core--execute "bookmark" "create" bookmark-name "-r" change-id)
+  (when (member "origin" (emajjutsu-core--list-remotes))
+    (emajjutsu-core--execute "bookmark" "track" bookmark-name "--remote=origin")))
 
 (defun emajjutsu-core/bookmark-delete (bookmark)
   "Delete BOOKMARK."
@@ -313,13 +318,8 @@ There are three options:
 	  (t (emajjutsu-core--execute
 	      "rebase" nil rebase-type-flag revision location-flag target-change)))))
 
-(defun emajjutsu-core/make-merge-change (merge-change changes)
-  (cl-destructuring-bind (&key parents &allow-other-keys)
-      (emajjutsu-core/change-status merge-change)
-    (let ((sibling-args (mapcan
-			 (lambda (change-id) (list "-o" change-id))
-			 (seq-concatenate 'list changes parents))))
-      (apply #'emajjutsu-core--execute "rebase" nil "-s" merge-change sibling-args))))
+(defun emajjutsu-core/make-merge-change (change-ids)
+  (emajjutsu-core--execute "new" nil change-ids))
 
 (defun emajjutsu-core/rebase-between
     (revision after-change before-change rebase-type)
