@@ -500,5 +500,11 @@ information.  The result is displayed in a specialized blame buffer."
 	     (merge-change (emajjutsu-display/change-selection "Select merge change: ")))
        (emajjutsu-core/make-merge-change merge-change marked-changes))))
 
+(defun emajjutsu/undo ()
+  "Undo the last change."
+  (interactive)
+  (emajjutsu--with-buffer-refresh
+   (emajjutsu-core/undo)))
+
 (provide 'emajjutsu)
 ;;; emajjutsu.el ends here

@@ -451,5 +451,8 @@ Change what annotations to show with CHANGE-SPEC (default: \"@\")."
 		       :false-object nil
 		       :array-type 'list)))
 
+(defun emajjutsu-core/undo ()
+  (emajjutsu-core--execute "undo" nil))
+
 (provide 'emajjutsu-core)
 ;;; emajjutsu-core.el ends here
