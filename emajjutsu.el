@@ -490,15 +490,19 @@ information.  The result is displayed in a specialized blame buffer."
       (pop-to-buffer buffer))
     buffer))
 
-(defun emajjutsu/make-merge-change ()
+(defun emajjutsu/merge-changes ()
   "Make all marked commits merge into a single selected commit."
   (interactive)
   (emajjutsu--with-buffer-refresh
    ;; this only makes sense in log mode
-   (if-let* ((marked-changes (if (equal major-mode 'emajjutsu/log-mode)
-				 (emajjutsu-log/marked-changes)))
-	     (merge-change (emajjutsu-display/change-selection "Select merge change: ")))
-       (emajjutsu-core/make-merge-change merge-change marked-changes))))
+   (let* ((log-mode-p (equal major-mode 'emajjutsu/log-mode))
+	  (marked-changes (when log-mode-p (emajjutsu-log/marked-changes)))
+	  (mark-count (length marked-changes)))
+     (if (< 1 mark-count)
+	 (let ((description (read-string "describe new change: ")))
+	   (emajjutsu-core/merge-changes marked-changes description))
+       (message "Cannot make a merge commit with %s change%s"
+		mark-count (if (= mark-count 1) "" "s"))))))
 
 (defun emajjutsu/undo ()
   "Undo the last change."

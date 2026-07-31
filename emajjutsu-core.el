@@ -318,8 +318,13 @@ There are three options:
 	  (t (emajjutsu-core--execute
 	      "rebase" nil rebase-type-flag revision location-flag target-change)))))
 
-(defun emajjutsu-core/make-merge-change (change-ids)
-  (emajjutsu-core--execute "new" nil change-ids))
+(defun emajjutsu-core/merge-changes (change-ids description)
+  (if (seq-some (apply-partially #'= 34) description)
+      (message "Cannot process descriptions containing '\"'")
+    (let ((args (if description
+		    (cons "-m" (cons (format "\"%s\"" description) change-ids))
+		  change-ids)))
+      (apply #'emajjutsu-core--execute "new" nil args))))
 
 (defun emajjutsu-core/rebase-between
     (revision after-change before-change rebase-type)
