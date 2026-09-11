@@ -60,14 +60,32 @@
 	   (propertize "×" 'face emajjutsu-face/conflict))
 	  (t "○"))))
 
-(defun emajjutsu-log--pad-lines (string)
-  "Add two spaces before each line in STRING."
-  (let ((lines (string-split string "\n")))
-    (seq-reduce
-     (lambda (result line)
-       (format "%s\n  %s" result line))
-     (cdr lines)
-     (car lines))))
+(defun emajjutsu-log--commits->tree (limit revisions)
+  (let* ((regex (rx (repeat 12 (or (any "0-9") (any "a-f")))))
+	 (log (split-string (emajjutsu-core/log-tree limit revisions) "\n"))
+	 (commit-count (length log))
+	 (line-vector (make-vector commit-count nil))
+	 (id-index (make-hash-table :size commit-count :test #'equal)))
+    (cl-do ((todo (cdr log) (cdr todo))
+	    (item (car log) (car todo))
+	    (idx 0 (+ idx 1)))
+	   ((not todo) nil)
+      (let ((match (string-match regex item)))
+	(aset line-vector idx item)
+	(unless (null match)
+	  (puthash (substring item match (+ match 12)) idx id-index))))
+    (list line-vector id-index)))
+
+(defun emajjutsu-log--rewrite-changes (limit revisions line-vector change-index)
+  (dolist (change (emajjutsu-core/log-changes limit revisions))
+    (let ((change-id (plist-get change :commit-id)))
+      (when-let* ((line-idx (gethash change-id change-index))
+		  (line (aref line-vector line-idx)))
+	(let* ((display (emajjutsu-display/change change :compact? t))
+	       (replacement (replace-regexp-in-string (regexp-quote change-id) display line))
+	       (decorated (emajjutsu-log--color-change-markers replacement)))
+	  (aset line-vector line-idx decorated)))))
+  line-vector)
 
 (defun emajjutsu-log/log (&optional limit revisions)
   "Create a buffer that displays the jj log with LIMIT and REVISIONS.
@@ -77,24 +95,12 @@ If REVISIONS is not specified, the default is used."
   (setq emajjutsu-log--current-limit limit)
   (emajjutsu-log--with-buffer
    (erase-buffer)
-   (insert
-    (emajjutsu-log--pad-lines
-     (string-join
-      (list
-       (format "Directory: %s" default-directory)
-       ""
-       (thread-last
-	 (emajjutsu-core/log-tree limit revisions)
-	 emajjutsu-log--color-change-markers
-	 (seq-reduce
-	  (lambda (acc change-spec)
-	    (let ((commit-id (plist-get change-spec :commit-id)))
-	      (replace-regexp-in-string
-	       (regexp-quote commit-id)
-	       (emajjutsu-display/change change-spec :compact? t)
-	       acc)))
-	  (emajjutsu-core/log-changes nil revisions))))
-      "\n")))
+   (let* ((log-indexes (emajjutsu-log--commits->tree limit revisions))
+	  (lines (car log-indexes))
+	  (change-idx (cadr log-indexes))
+	  (log (emajjutsu-log--rewrite-changes nil nil lines change-idx)))
+     (insert
+      (string-join  log "\n")))
    (goto-char (point-min))))
 
 (defun emajjutsu-log/quit ()
