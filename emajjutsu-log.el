@@ -71,7 +71,7 @@
 	    (idx 0 (+ idx 1)))
 	   ((not todo) nil)
       (let ((match (string-match regex item)))
-	(aset line-vector idx item)
+	(aset line-vector idx (concat " " item))
 	(unless (null match)
 	  (puthash (substring item match (+ match 12)) idx id-index))))
     (list line-vector id-index)))
@@ -99,8 +99,8 @@ If REVISIONS is not specified, the default is used."
 	  (lines (car log-indexes))
 	  (change-idx (cadr log-indexes))
 	  (log (emajjutsu-log--rewrite-changes nil nil lines change-idx)))
-     (insert
-      (string-join  log "\n")))
+     (insert (format "Directory: %s\n" default-directory))
+     (insert (string-join log "\n")))
    (goto-char (point-min))))
 
 (defun emajjutsu-log/quit ()
